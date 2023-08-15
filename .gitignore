@@ -1,0 +1,6 @@
+**/*.log
+**/*.txt
+Lab05/programs/golden/
+Lab05/programs/build/
+**/buildDir/
+**/bluesim/
