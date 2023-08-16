@@ -211,6 +211,7 @@ function DecodedInst decode(Instruction inst);
 	endcase
 
 	// no write to x0
+	// What is the meaning of &&&
 	if(dInst.dst matches tagged Valid .dst &&& dst == 0) begin
 		dInst.dst = tagged Invalid;
 	end

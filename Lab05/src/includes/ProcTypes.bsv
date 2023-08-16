@@ -26,6 +26,13 @@ typedef enum {
 	PrintIntHigh = 2'd3
 } CpuToHostType deriving(Bits, Eq, FShow);
 
+typedef enum {
+	Fetch = 2'd0,
+	Decode = 2'd1,
+	Execute = 2'd2,
+	Writeback = 2'd3
+} Stage deriving(Bits, Eq, FShow);
+
 typedef struct {
 	CpuToHostType c2hType;
 	Bit#(16) data;
@@ -183,6 +190,7 @@ Bit#(3) fnCSRRS  = 3'b010;
 Bit#(3) fnPRIV   = 3'b000;
 Bit#(12) privSCALL    = 12'h000;
 
+// If dst indx == src indx, data hazard happens
 function Bool dataHazard(Maybe#(RIndx) src1, Maybe#(RIndx) src2, Maybe#(RIndx) dst);
     return (isValid(dst) && ((isValid(src1) && fromMaybe(?, dst)==fromMaybe(?, src1)) ||
                              (isValid(src2) && fromMaybe(?, dst)==fromMaybe(?, src2))));

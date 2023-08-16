@@ -82,7 +82,7 @@ $(bmarks_riscv_vmh): %.riscv.vmh: %.riscv
 	@echo $(basename $<)
 	@echo "@0" > $(bmarks_build_vmh_dir)/temp
 	$(RISCV_ELF2HEX) $(VMH_WIDTH) $(VMH_DEPTH) $(bmarks_build_bin_dir)/$< >> $(bmarks_build_vmh_dir)/temp
-	python3 $(bmarkdir)/../trans_vmh_bmark.py $(bmarks_build_vmh_dir)/temp $(bmarks_build_vmh_dir)/$@
+	python3 $(bmarkdir)/../trans_vmh.py $(bmarks_build_vmh_dir)/temp $(bmarks_build_vmh_dir)/$@
 
 $(bmarks_riscv_dump): %.riscv.dump: %.riscv
 	$(RISCV_OBJDUMP) $(bmarks_build_bin_dir)/$< > $(bmarks_build_dump_dir)/$@

@@ -38,6 +38,7 @@ function Data alu(Data a, Data b, AluFunc func);
   return res;
 endfunction
 
+// noinline Top-level function definition
 (* noinline *)
 function Bool aluBr(Data a, Data b, BrFunc brFunc);
   Bool brTaken = case(brFunc)

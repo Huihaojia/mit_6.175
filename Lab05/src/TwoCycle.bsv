@@ -1,4 +1,4 @@
-// OneCycle.bsv
+// TwoCycle.bsv
 //
 // This is a one cycle implementation of the RISC-V processor.
 
@@ -24,6 +24,9 @@ module mkProc(Proc);
     DMemory  dMem <- mkDMemory;
     CsrFile  csrf <- mkCsrFile;
 
+    Reg#(Data) f2d <- mkRegU;
+    Reg#(Stage) state <- mkReg(Fetch);
+
     Bool memReady = iMem.init.done() && dMem.init.done();
     rule test (!memReady);
         let e = tagged InitDone;
@@ -31,12 +34,14 @@ module mkProc(Proc);
         dMem.init.request.put(e);
     endrule
 
-    rule doProc(csrf.started);
-        Data inst = iMem.req(pc);
+    rule doFetch if (csrf.started && state == Fetch);
+        f2d <= iMem.req(pc);
+        state <= Execute;
+    endrule
 
-        // decode
-        DecodedInst dInst = decode(inst);
-
+    rule doExecute if (state == Execute);
+        let inst = f2d;
+        DecodedInst dInst = decode(f2d);
         // read general purpose register values 
         Data rVal1 = rf.rd1(fromMaybe(?, dInst.src1));
         Data rVal2 = rf.rd2(fromMaybe(?, dInst.src2));
@@ -69,36 +74,6 @@ module mkProc(Proc);
             $finish;
         end
 
-		/* 
-		// These codes are checking invalid CSR index
-		// you could uncomment it for debugging
-		// 
-		// check invalid CSR read
-		if(eInst.iType == Csrr) begin
-			let csrIdx = fromMaybe(0, eInst.csr);
-			case(csrIdx)
-				csrCycle, csrInstret, csrMhartid: begin
-					$display("CSRR reads 0x%0x", eInst.data);
-				end
-				default: begin
-					$fwrite(stderr, "ERROR: read invalid CSR 0x%0x. Exiting\n", csrIdx);
-					$finish;
-				end
-			endcase
-		end
-		// check invalid CSR write
-		if(eInst.iType == Csrw) begin
-			let csrIdx = fromMaybe(0, eInst.csr);
-			if(csrIdx != csrMtohost) begin
-				$fwrite(stderr, "ERROR: invalid CSR index = 0x%0x. Exiting\n", csrIdx);
-				$finish;
-			end
-			else begin
-				$display("CSRW writes 0x%0x", eInst.data);
-			end
-		end
-		*/
-
         // write back to reg file
         if(isValid(eInst.dst)) begin
             rf.wr(fromMaybe(?, eInst.dst), eInst.data);
@@ -107,8 +82,11 @@ module mkProc(Proc);
         // update the pc depending on whether the branch is taken or not
         pc <= eInst.brTaken ? eInst.addr : pc + 4;
 
+        state <= Fetch;
+
         // CSR write for sending data to host & stats
         csrf.wr(eInst.iType == Csrw ? eInst.csr : Invalid, eInst.data);
+
     endrule
 
     method ActionValue#(CpuToHostData) cpuToHost;

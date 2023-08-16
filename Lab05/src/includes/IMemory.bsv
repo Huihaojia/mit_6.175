@@ -19,10 +19,12 @@ endinterface
 module mkIMemory(IMemory);
 	// In simulation we always init memory from a fixed VMH file (for speed)
 	RegFile#(Bit#(16), Data) mem <- mkRegFileFullLoad("mem.vmh");
+    // Why there is a DummyMemInit
 	MemInitIfc memInit <- mkDummyMemInit;
-   // RegFile#(Bit#(16), Data) mem <- mkRegFileFull();
-   // MemInitIfc memInit <- mkMemInitRegFile(mem);
+    // RegFile#(Bit#(16), Data) mem <- mkRegFileFull();
+    // MemInitIfc memInit <- mkMemInitRegFile(mem);
 
+    // Why ">>2"
     method MemResp req(Addr a) if (memInit.done());
         return mem.sub(truncate(a>>2));
     endmethod

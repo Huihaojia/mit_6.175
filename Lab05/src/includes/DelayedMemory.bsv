@@ -25,6 +25,7 @@ interface DelayedMemory;
     interface MemInitIfc init;
 endinterface
 
+// Read Delayed
 module mkDelayedMemory(DelayedMemory);
     Fifo#(2, MemResp) outFifo <- mkCFFifo();
 	RegFile#(Bit#(16), Data) mem <- mkRegFileFullLoad("mem.vmh");
