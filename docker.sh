@@ -1,0 +1,1 @@
+docker run --rm -it --mount=type=bind,source=/home/hhj/Repositories/mit_6.175,destination=/hhj --user root kazutoiris/connectal bash

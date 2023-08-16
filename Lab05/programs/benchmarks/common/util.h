@@ -11,11 +11,10 @@
 // to 0 if you are compiling with the smips-gcc toolchain.
 
 #ifndef HOST_DEBUG
-#define HOST_DEBUG 1
+#define HOST_DEBUG 0
 #endif
 
 #include <stdint.h>
-#include <unistd.h>
 
 #if HOST_DEBUG
 

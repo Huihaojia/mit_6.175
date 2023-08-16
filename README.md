@@ -55,3 +55,26 @@ Secondly, if you type ```-Wa,``` before ```-march```, you should replicate the `
 ### Changing Python Codes
 
 The last trival left by the old lab is the difference between ```python``` and ```python3```.
+
+### Compiling
+
+```
+cd ./programs/assembly/
+make clean
+make
+
+cd ./programs/benchmarks
+make clean
+make
+```
+
+### Building BSV in Docker
+
+```
+sudo ./docker.sh
+cd /hhj
+cd Lab05
+make build.bluesim VPROC=ONECYCLE
+./run_asm.sh
+./run_bmarks.sh
+```

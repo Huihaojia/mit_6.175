@@ -22,10 +22,6 @@ asm_tests=(
 	cache
 	)
 
-single_test=(
-	add
-)
-
 vmh_dir=programs/build/assembly/vmh
 log_dir=logs
 wait_time=3
@@ -38,7 +34,7 @@ pkill bluetcl
 pkill ubuntu.exe
 
 # run each test
-for test_name in ${single_test[@]}; do
+for test_name in ${asm_tests[@]}; do
 	echo "-- assembly test: ${test_name} --"
 	# copy vmh file
 	mem_file=${vmh_dir}/${test_name}.riscv.vmh

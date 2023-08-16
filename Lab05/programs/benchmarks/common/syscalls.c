@@ -28,7 +28,6 @@ enum ToHostTag {
 	PrintIntHigh = 3
 };
 
-
 void printInt(uint32_t c) {
 	// print low 16 bits
 	int lo = (c & 0x0000FFFF) | (((uint32_t)PrintIntLow) << 16);
