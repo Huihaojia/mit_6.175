@@ -147,6 +147,11 @@ typedef struct {
     Bool             brTaken;
 } ExecInst deriving(Bits, Eq, FShow);
 
+typedef struct {
+	Addr			lastPc;
+	Instruction		inst;
+} Fetch2Execute deriving(Bits, Eq, FShow);
+
 // function code
 // ALU
 Bit#(3) fnADD   = 3'b000;

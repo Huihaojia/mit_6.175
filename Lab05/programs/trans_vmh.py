@@ -18,7 +18,7 @@ if ((len(lines) - 1) % 8) != 0:
 
 with open(out_file, 'w') as fout:
 	fout.write(lines[0])
-	for i in range(0, len(lines)):
+	for i in range(1, len(lines)):
 		val = lines[i][:-1].rstrip('\n')
 		fout.write(val[8:] + '\n')
 		fout.write(val[:8] + '\n')

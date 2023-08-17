@@ -2,54 +2,6 @@
 /bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
 /bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
 /bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
--- benchmark test: multiply --
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-obj/Makefile:550: warning: overriding recipe for target 'verilog/mkPcieRootPortX7.v'
-obj/Makefile:243: warning: ignoring old recipe for target 'verilog/mkPcieRootPortX7.v'
--- benchmark test: qsort --
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-obj/Makefile:680: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:495: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:775: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:680: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:805: warning: overriding recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:414: warning: ignoring old recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:550: warning: overriding recipe for target 'verilog/mkPcieRootPortX7.v'
-obj/Makefile:243: warning: ignoring old recipe for target 'verilog/mkPcieRootPortX7.v'
--- benchmark test: towers --
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-obj/Makefile:680: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:495: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:775: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:680: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:805: warning: overriding recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:414: warning: ignoring old recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:550: warning: overriding recipe for target 'verilog/mkPcieRootPortX7.v'
-obj/Makefile:243: warning: ignoring old recipe for target 'verilog/mkPcieRootPortX7.v'
--- benchmark test: vvadd --
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-/bin/sh: 1: cannot open /opt/connectal/boardinfo/.json: No such file
-obj/Makefile:680: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:495: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:775: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:680: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:1576: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1560: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:805: warning: overriding recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:414: warning: ignoring old recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:1592: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1576: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1592: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1624: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: ignoring old recipe for target 'verilog/mkProc.v'
 obj/Makefile:550: warning: overriding recipe for target 'verilog/mkPcieRootPortX7.v'
 obj/Makefile:243: warning: ignoring old recipe for target 'verilog/mkPcieRootPortX7.v'
 obj/Makefile:680: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
@@ -58,8 +10,6 @@ obj/Makefile:775: warning: overriding recipe for target 'verilog/mkPcieEndpointX
 obj/Makefile:680: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
 obj/Makefile:805: warning: overriding recipe for target 'verilog/mkDdr3.v'
 obj/Makefile:414: warning: ignoring old recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:550: warning: overriding recipe for target 'verilog/mkPcieRootPortX7.v'
-obj/Makefile:243: warning: ignoring old recipe for target 'verilog/mkPcieRootPortX7.v'
 obj/Makefile:1576: warning: overriding recipe for target 'verilog/mkProc.v'
 obj/Makefile:1560: warning: ignoring old recipe for target 'verilog/mkProc.v'
 obj/Makefile:1592: warning: overriding recipe for target 'verilog/mkProc.v'
@@ -69,52 +19,6 @@ obj/Makefile:1592: warning: ignoring old recipe for target 'verilog/mkProc.v'
 ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 buffer /hhj/Lab05/bluesim/bin/ubuntu.exe
 ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-obj/Makefile:1624: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:680: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:495: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:775: warning: overriding recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:680: warning: ignoring old recipe for target 'verilog/mkPcieEndpointX7.v'
-obj/Makefile:805: warning: overriding recipe for target 'verilog/mkDdr3.v'
-obj/Makefile:414: warning: ignoring old recipe for target 'verilog/mkDdr3.v'
-ERROR: Executing unsupported instruction at pc: 0000036c. Exiting
-obj/Makefile:1576: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1560: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1592: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1576: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1592: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1624: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: ignoring old recipe for target 'verilog/mkProc.v'
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-buffer /hhj/Lab05/bluesim/bin/ubuntu.exe
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-obj/Makefile:1576: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1560: warning: ignoring old recipe for target 'verilog/mkProc.v'
-ERROR: Executing unsupported instruction at pc: 0000036c. Exiting
-obj/Makefile:1592: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1576: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1592: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1624: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: ignoring old recipe for target 'verilog/mkProc.v'
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-buffer /hhj/Lab05/bluesim/bin/ubuntu.exe
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-obj/Makefile:1576: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1560: warning: ignoring old recipe for target 'verilog/mkProc.v'
-ERROR: Executing unsupported instruction at pc: 0000036c. Exiting
-obj/Makefile:1592: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1576: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1592: warning: ignoring old recipe for target 'verilog/mkProc.v'
-obj/Makefile:1624: warning: overriding recipe for target 'verilog/mkProc.v'
-obj/Makefile:1608: warning: ignoring old recipe for target 'verilog/mkProc.v'
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-buffer /hhj/Lab05/bluesim/bin/ubuntu.exe
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-ERROR: Executing unsupported instruction at pc: 0000036c. Exiting
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-buffer /hhj/Lab05/bluesim/bin/ubuntu.exe
-ERROR: ld.so: object 'libSegFault.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
-ERROR: Executing unsupported instruction at pc: 0000036c. Exiting
+ERROR: Executing unsupported instruction at pc: 00000000. Exiting
+make[1]: *** [/opt/connectal/scripts/Makefile.connectal.build:250: run] Interrupt
+make: *** [/opt/connectal/Makefile.connectal:69: run.bluesim] Interrupt

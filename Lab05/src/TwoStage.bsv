@@ -16,16 +16,20 @@ import Fifo::*;
 import Ehr::*;
 import GetPut::*;
 
+function Addr predicatePC(Addr pc);
+    return pc + 4;
+endfunction
+
 (* synthesize *)
 module mkProc(Proc);
-    Reg#(Addr) pc <- mkRegU;
+    Ehr#(2, Addr) pc <- mkRegU;
     RFile      rf <- mkRFile;
     IMemory  iMem <- mkIMemory;
     DMemory  dMem <- mkDMemory;
     CsrFile  csrf <- mkCsrFile;
 
-    Reg#(Data) f2d <- mkRegU;
-    Reg#(Stage) state <- mkReg(Fetch);
+    Reg#(Addr) lastPc <- mkRegU;
+    Fifo#(4, Maybe#(Fetch2Execute)) f2e <- mkCFFifo();
 
     Bool memReady = iMem.init.done() && dMem.init.done();
     rule test (!memReady);
@@ -34,59 +38,50 @@ module mkProc(Proc);
         dMem.init.request.put(e);
     endrule
 
-    rule doFetch if (csrf.started && state == Fetch);
-        f2d <= iMem.req(pc);
-        state <= Execute;
+    rule doFetch if (csrf.started);
+        // Record last PC for calculating branch pc
+        let newInst = iMem.req(pc);
+        let newPc = predicatePC(pc);
+        pc[0] <= newPc;
+        f2e.enq(Fetch2Execute{lastPc: pc, inst: newInst});
     endrule
 
-    rule doExecute if (state == Execute);
-        let inst = f2d;
-        DecodedInst dInst = decode(f2d);
-        // read general purpose register values 
+    rule doExecute;
+        let fetch = f2e.first();
+        let inst = fetch.inst;
+        DecodedInst dInst = decode(inst);
         Data rVal1 = rf.rd1(fromMaybe(?, dInst.src1));
         Data rVal2 = rf.rd2(fromMaybe(?, dInst.src2));
 
-        // read CSR values (for CSRR inst)
         Data csrVal = csrf.rd(fromMaybe(?, dInst.csr));
 
-        // execute
-        ExecInst eInst = exec(dInst, rVal1, rVal2, pc, ?, csrVal);  
-		// The fifth argument above is the predicted pc, to detect if it was mispredicted. 
-		// Since there is no branch prediction, this field is sent with a random value
-
-        // memory
+        ExecInst eInst = exec(dInst, rVal1, rVal2, fetch.lastPc, pc[1], csrVal);  
         if(eInst.iType == Ld) begin
             eInst.data <- dMem.req(MemReq{op: Ld, addr: eInst.addr, data: ?});
         end else if(eInst.iType == St) begin
             let d <- dMem.req(MemReq{op: St, addr: eInst.addr, data: eInst.data});
         end
 
-		// commit
-
-        // trace - print the instruction
         $display("pc: %h inst: (%h) expanded: ", pc, inst, showInst(inst));
-	    $fflush(stdout);
+        $fflush(stdout);
 
-        // check unsupported instruction at commit time. Exiting
-        // How stderr works?
         if(eInst.iType == Unsupported) begin
             $fwrite(stderr, "ERROR: Executing unsupported instruction at pc: %x. Exiting\n", pc);
             $finish;
         end
 
-        // write back to reg file
         if(isValid(eInst.dst)) begin
             rf.wr(fromMaybe(?, eInst.dst), eInst.data);
         end
 
-        // update the pc depending on whether the branch is taken or not
-        pc <= eInst.brTaken ? eInst.addr : pc + 4;
-
-        state <= Fetch;
-
-        // CSR write for sending data to host & stats
         csrf.wr(eInst.iType == Csrw ? eInst.csr : Invalid, eInst.data);
 
+        if (eInst.mispredict && eInst.brTaken) begin
+            pc[1] = eInst.addr;
+            f2e.clear;
+        end else begin
+            f2e.deq;
+        end
     endrule
 
     method ActionValue#(CpuToHostData) cpuToHost;
@@ -98,7 +93,7 @@ module mkProc(Proc);
         csrf.start(0); // only 1 core, id = 0
         $display("Start at pc 200\n");
         $fflush(stdout);
-        pc <= startpc;
+        pc[0] <= startpc;
     endmethod
 
     interface iMemInit = iMem.init;

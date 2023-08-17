@@ -24,7 +24,6 @@ module mkIMemory(IMemory);
     // RegFile#(Bit#(16), Data) mem <- mkRegFileFull();
     // MemInitIfc memInit <- mkMemInitRegFile(mem);
 
-    // Why ">>2"
     method MemResp req(Addr a) if (memInit.done());
         return mem.sub(truncate(a>>2));
     endmethod
