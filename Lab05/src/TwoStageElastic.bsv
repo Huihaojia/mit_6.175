@@ -13,6 +13,7 @@ import Exec::*;
 import CsrFile::*;
 import Vector::*;
 import Fifo::*;
+import FIFO::*;
 import Ehr::*;
 import GetPut::*;
 
@@ -22,14 +23,14 @@ endfunction
 
 (* synthesize *)
 module mkProc(Proc);
-    Ehr#(2, Addr) pc <- mkRegU;
+    Ehr#(2, Addr) pc <- mkEhr(0);
     RFile      rf <- mkRFile;
     IMemory  iMem <- mkIMemory;
     DMemory  dMem <- mkDMemory;
     CsrFile  csrf <- mkCsrFile;
 
-    Reg#(Addr) lastPc <- mkRegU;
-    Fifo#(4, Maybe#(Fetch2Execute)) f2e <- mkCFFifo();
+    // Why my FIFO not push until full?
+    Fifo#(16, Fetch2Execute) f2e <- mkCFFifo();
 
     Bool memReady = iMem.init.done() && dMem.init.done();
     rule test (!memReady);
@@ -40,14 +41,19 @@ module mkProc(Proc);
 
     rule doFetch if (csrf.started);
         // Record last PC for calculating branch pc
-        let newInst = iMem.req(pc);
-        let newPc = predicatePC(pc);
+        let newInst = iMem.req(pc[0]);
+        let newPc = predicatePC(pc[0]);
         pc[0] <= newPc;
-        f2e.enq(Fetch2Execute{lastPc: pc, inst: newInst});
+        f2e.enq(Fetch2Execute{lastPc: pc[0], nextPc: newPc, inst: newInst});
+        $display("Put data into FIFO\n");
+        $display("notFull: %h, notEmpty: %h\n", f2e.notFull, f2e.notEmpty);
     endrule
 
-    rule doExecute;
+    (* fire_when_enabled *)
+    rule doExecute if (csrf.started);
         let fetch = f2e.first();
+        $display("notFull: %h, notEmpty: %h\n", f2e.notFull, f2e.notEmpty);
+        $display("Get data from FIFO\n");
         let inst = fetch.inst;
         DecodedInst dInst = decode(inst);
         Data rVal1 = rf.rd1(fromMaybe(?, dInst.src1));
@@ -55,18 +61,18 @@ module mkProc(Proc);
 
         Data csrVal = csrf.rd(fromMaybe(?, dInst.csr));
 
-        ExecInst eInst = exec(dInst, rVal1, rVal2, fetch.lastPc, pc[1], csrVal);  
+        ExecInst eInst = exec(dInst, rVal1, rVal2, fetch.lastPc, fetch.nextPc, csrVal);  
         if(eInst.iType == Ld) begin
             eInst.data <- dMem.req(MemReq{op: Ld, addr: eInst.addr, data: ?});
         end else if(eInst.iType == St) begin
             let d <- dMem.req(MemReq{op: St, addr: eInst.addr, data: eInst.data});
         end
 
-        $display("pc: %h inst: (%h) expanded: ", pc, inst, showInst(inst));
+        $display("pc: %h inst: (%h) expanded: ", fetch.lastPc, inst, showInst(inst));
         $fflush(stdout);
 
         if(eInst.iType == Unsupported) begin
-            $fwrite(stderr, "ERROR: Executing unsupported instruction at pc: %x. Exiting\n", pc);
+            $fwrite(stderr, "ERROR: Executing unsupported instruction at pc: %x. Exiting\n", fetch.lastPc);
             $finish;
         end
 
@@ -76,10 +82,12 @@ module mkProc(Proc);
 
         csrf.wr(eInst.iType == Csrw ? eInst.csr : Invalid, eInst.data);
 
-        if (eInst.mispredict && eInst.brTaken) begin
-            pc[1] = eInst.addr;
+        if (eInst.mispredict) begin
+            pc[1] <= eInst.brTaken ? eInst.addr : fetch.nextPc;
             f2e.clear;
+            $display("FIFO cleared\n");
         end else begin
+            $display("Push Data from FIFO\n");
             f2e.deq;
         end
     endrule

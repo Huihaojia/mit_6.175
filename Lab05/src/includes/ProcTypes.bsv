@@ -149,6 +149,7 @@ typedef struct {
 
 typedef struct {
 	Addr			lastPc;
+	Addr			nextPc;
 	Instruction		inst;
 } Fetch2Execute deriving(Bits, Eq, FShow);
 

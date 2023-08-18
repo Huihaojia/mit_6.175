@@ -284,3 +284,81 @@ instance ToPut#( Fifo#(n, t), t ) provisos (Bits#(t, tsz));
                 endinterface);
     endfunction
 endinstance
+
+module mkMyCFFifo( Fifo#(n, t) ) provisos (Bits#(t,tSz));
+    // n is size of fifo
+    // t is data type of fifo
+    Vector#(n, Reg#(t)) regs <- replicateM(mkReg(?));
+    Ehr#(2, Bit#(TAdd#(TLog#(n), 1))) enqPtr <- mkEhr(0);
+    Ehr#(2, Bit#(TAdd#(TLog#(n), 1))) deqPtr <- mkEhr(0);
+    Ehr#(2, Bool) deqBuf <- mkEhr(False);
+    Ehr#(2, Maybe#(t)) enqBuf <- mkEhr(tagged Invalid);
+    Ehr#(2, Bool) nEmpty <- mkEhr(False);
+    Ehr#(2, Bool) nFull <- mkEhr(True);
+    Bit#(TAdd#(TLog#(n), 1)) depth = fromInteger(valueOf(n));
+
+    (* fire_when_enabled *)         // WILL_FIRE == CAN_FIRE
+    (* no_implicit_conditions *)    // CAN_FIRE == guard (True)
+    rule canonicalize;
+        let nextEnqPtr = enqPtr[0] + 1;
+        let nextDeqPtr = deqPtr[0] + 1;
+
+        if (nextEnqPtr == depth) nextEnqPtr = 0;
+        if (nextDeqPtr == depth) nextDeqPtr = 0;
+
+
+        if (deqBuf[1] && isValid(enqBuf[1]) && nEmpty[0] && nFull[0]) begin
+            nFull[0] <= True;
+            nEmpty[0] <= True;
+            deqPtr[0] <= nextDeqPtr;
+            enqPtr[0] <= nextEnqPtr;
+            regs[enqPtr[0]] <= fromMaybe(?, enqBuf[1]);
+        end else if (nEmpty[0] && deqBuf[1]) begin
+            if (nextDeqPtr == enqPtr[0]) begin
+                nEmpty[0] <= False;
+            end
+            nFull[0] <= True;
+            deqPtr[0] <= nextDeqPtr;
+        end else if (nFull[0] && isValid(enqBuf[1])) begin
+            if (nextEnqPtr == deqPtr[0]) begin
+                nFull[0] <= False;
+            end
+            nEmpty[0] <= True;
+            enqPtr[0] <= nextEnqPtr;
+            regs[enqPtr[0]] <= fromMaybe(?, enqBuf[1]);
+        end
+
+        enqBuf[1] <= tagged Invalid;
+        deqBuf[1] <= False;
+    endrule
+
+    method Action enq (t x) if(nFull[0]);
+        enqBuf[0] <= tagged Valid (x);
+    endmethod
+
+    method Action deq() if(nEmpty[0]);
+        deqBuf[0] <= True;
+    endmethod
+
+    method Bool notFull();
+        return nFull[0];
+    endmethod
+
+    method Bool notEmpty();
+        return nEmpty[0];
+    endmethod
+
+    method t first();
+        return regs[deqPtr[0]];
+    endmethod
+
+    method Action clear();
+        // enqBuf[1] <= tagged Invalid;
+        // deqBuf[1] <= False;
+        enqPtr[1] <= 0;
+        deqPtr[1] <= 0;
+        nEmpty[1] <= False;
+        nFull[1] <= True;
+    endmethod
+
+endmodule
