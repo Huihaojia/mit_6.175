@@ -49,8 +49,8 @@ module mkProc(Proc);
         $display("notFull: %h, notEmpty: %h\n", f2e.notFull, f2e.notEmpty);
     endrule
 
-    (* fire_when_enabled *)
-    rule doExecute if (csrf.started);
+    // As for EHR[i], you must not use the same i in one rule.
+    rule doExecute;
         let fetch = f2e.first();
         $display("notFull: %h, notEmpty: %h\n", f2e.notFull, f2e.notEmpty);
         $display("Get data from FIFO\n");

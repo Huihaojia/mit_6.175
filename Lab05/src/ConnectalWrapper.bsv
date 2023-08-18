@@ -15,6 +15,18 @@ import TwoStageBTB::*;
 `ifdef FOURCYCLE
 import FourCycle::*;
 `endif
+`ifdef TWOSTAGEELASTIC
+import TwoStageElastic::*;
+`endif
+`ifdef TWOSTAGEINELASTIC
+import TwoStageInelastic::*;
+`endif
+`ifdef TWOSTAGEEPOCH
+import TwoStageEpoch::*;
+`endif
+`ifdef TWOSTAGEERROR
+import TwoStageError::*;
+`endif
 
 import Ifc::*;
 import ProcTypes::*;

@@ -49,7 +49,6 @@ module mkProc(Proc);
         $display("notFull: %h, notEmpty: %h\n", f2e.notFull, f2e.notEmpty);
     endrule
 
-    (* fire_when_enabled *)
     rule doExecute if (csrf.started);
         let fetch = f2e.first();
         $display("notFull: %h, notEmpty: %h\n", f2e.notFull, f2e.notEmpty);
