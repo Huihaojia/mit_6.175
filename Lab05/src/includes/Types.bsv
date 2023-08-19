@@ -24,3 +24,4 @@ typedef Bit#(DataSz) Data;
 typedef 32 InstSz;
 typedef Bit#(InstSz) Instruction;
 
+typedef Bool EpochSz;

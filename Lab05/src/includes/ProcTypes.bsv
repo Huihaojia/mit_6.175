@@ -153,6 +153,19 @@ typedef struct {
 	Instruction		inst;
 } Fetch2Execute deriving(Bits, Eq, FShow);
 
+typedef struct {
+	Addr			lastPc;
+	Addr			nextPc;
+	Instruction		inst;
+	EpochSz			fEpoch;
+} Fetch2ExecuteEpoch deriving(Bits, Eq, FShow);
+
+typedef struct {
+	Addr			correctPc;
+	EpochSz			eEpoch;
+} Execute2FetchEpoch deriving(Bits, Eq, FShow);
+
+
 // function code
 // ALU
 Bit#(3) fnADD   = 3'b000;

@@ -16,10 +16,7 @@ import Fifo::*;
 import FIFO::*;
 import Ehr::*;
 import GetPut::*;
-
-function Addr predicatePC(Addr pc);
-    return pc + 4;
-endfunction
+import Btb::*;
 
 (* synthesize *)
 module mkProc(Proc);
@@ -28,6 +25,7 @@ module mkProc(Proc);
     IMemory  iMem <- mkIMemory;
     DMemory  dMem <- mkDMemory;
     CsrFile  csrf <- mkCsrFile;
+    Btb#(16) btbf <- mkBtb();
 
     Fifo#(16, Fetch2ExecuteEpoch) f2e <- mkCFFifo();
     Fifo#(16, Execute2FetchEpoch) e2f <- mkCFFifo();
@@ -44,12 +42,13 @@ module mkProc(Proc);
     rule doFetch if (csrf.started);
         // Record last PC for calculating branch pc
         let newInst = iMem.req(pc);
-        let newPc = predicatePC(pc);
-
+        let newPc = btbf.predPc(pc);
         let redirect = e2f.first;
+
         if(e2f.notEmpty) begin
             fEpoch <= !fEpoch;
             newPc = redirect.correctPc;
+            btbf.update(pc, newPc);
             e2f.deq;
         end else begin
             f2e.enq(Fetch2ExecuteEpoch{lastPc: pc, nextPc: newPc, inst: newInst, fEpoch: fEpoch});
@@ -61,7 +60,6 @@ module mkProc(Proc);
     rule doExecute if (csrf.started);
         let fetch = f2e.first();
         let inst = fetch.inst;
-        // if (fetch.fEpoch)
         DecodedInst dInst = decode(inst);
         Data rVal1 = rf.rd1(fromMaybe(?, dInst.src1));
         Data rVal2 = rf.rd2(fromMaybe(?, dInst.src2));

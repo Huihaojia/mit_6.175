@@ -10,7 +10,7 @@ import TwoCycle::*;
 import TwoStage::*;
 `endif
 `ifdef TWOSTAGEBTB
-import TwoStageBTB::*;
+import TwoStageBtb::*;
 `endif
 `ifdef FOURCYCLE
 import FourCycle::*;
@@ -23,9 +23,6 @@ import TwoStageInelastic::*;
 `endif
 `ifdef TWOSTAGEEPOCH
 import TwoStageEpoch::*;
-`endif
-`ifdef TWOSTAGEERROR
-import TwoStageError::*;
 `endif
 
 import Ifc::*;
