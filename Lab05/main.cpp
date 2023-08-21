@@ -39,7 +39,7 @@ public:
 					fprintf(fp, "FAILED: exit code = %d\n", data);
 					fprintf(stderr, "FAILED: exit code = %d\n", data);
 				}
-		                run=0;
+		        run = 0;
 			} else if(type == 1) {
 				fprintf(fp, "%c", (char)data);
 				fprintf(stderr, "%c", (char)data);

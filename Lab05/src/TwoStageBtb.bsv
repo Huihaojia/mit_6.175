@@ -25,10 +25,10 @@ module mkProc(Proc);
     IMemory  iMem <- mkIMemory;
     DMemory  dMem <- mkDMemory;
     CsrFile  csrf <- mkCsrFile;
-    Btb#(16) btbf <- mkBtb();
+    Btb#(6) btbf <- mkBtb();
 
-    Fifo#(16, Fetch2ExecuteEpoch) f2e <- mkCFFifo();
-    Fifo#(16, Execute2FetchEpoch) e2f <- mkCFFifo();
+    Fifo#(4, Fetch2ExecuteEpoch) f2e <- mkCFFifo();
+    Fifo#(4, Execute2FetchBtb) e2f <- mkCFFifo();
     Reg#(EpochSz) fEpoch <- mkReg(False);
     Reg#(EpochSz) eEpoch <- mkReg(False);
 
@@ -42,15 +42,15 @@ module mkProc(Proc);
     rule doFetch if (csrf.started);
         // Record last PC for calculating branch pc
         let newInst = iMem.req(pc);
-        let newPc = btbf.predPc(pc);
+        Addr newPc = btbf.predPc(pc);
         let redirect = e2f.first;
 
         if(e2f.notEmpty) begin
             fEpoch <= !fEpoch;
-            newPc = redirect.correctPc;
-            btbf.update(pc, newPc);
+            newPc = btbf.predPc(pc);
             e2f.deq;
         end else begin
+            newPc = pc + 4;
             f2e.enq(Fetch2ExecuteEpoch{lastPc: pc, nextPc: newPc, inst: newInst, fEpoch: fEpoch});
         end
 
@@ -76,7 +76,7 @@ module mkProc(Proc);
         $display("pc: %h inst: (%h) expanded: ", fetch.lastPc, inst, showInst(inst));
         $fflush(stdout);
 
-        if(eInst.iType == Unsupported) begin
+        if(eInst.iType == Unsupported && inst != 0) begin
             $fwrite(stderr, "ERROR: Executing unsupported instruction at pc: %x. Exiting\n", fetch.lastPc);
             $finish;
         end
@@ -88,8 +88,9 @@ module mkProc(Proc);
         csrf.wr(eInst.iType == Csrw ? eInst.csr : Invalid, eInst.data);
 
         if (eInst.mispredict && eInst.brTaken) begin
+            btbf.update(fetch.lastPc, eInst.addr);
             eEpoch <= !eEpoch;
-            e2f.enq(Execute2FetchEpoch{correctPc: eInst.addr, eEpoch: eEpoch});
+            e2f.enq(Execute2FetchBtb{eEpoch: eEpoch});
             f2e.clear;
         end else begin
             f2e.deq;

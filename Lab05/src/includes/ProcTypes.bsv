@@ -165,6 +165,9 @@ typedef struct {
 	EpochSz			eEpoch;
 } Execute2FetchEpoch deriving(Bits, Eq, FShow);
 
+typedef struct {
+	EpochSz			eEpoch;
+} Execute2FetchBtb deriving(Bits, Eq, FShow);
 
 // function code
 // ALU
