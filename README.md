@@ -78,3 +78,13 @@ make build.bluesim VPROC=ONECYCLE
 ./run_asm.sh
 ./run_bmarks.sh
 ```
+
+### Problems I have met
+
+#### 1. Program exit incorrct
+
+In BTB Lab, my program cannot exit correctly. PC have arrived at ```j	75c <exit+0x6c>``` but the predicted PC still updated with ```PC+4```. The key of this issue is that I donnot update PC from Btb all the time in the fetch stage, where I threw ```PC+4``` when the fEpoch does not conflict with eEpoch.
+
+#### 2. Dead loop
+
+Also, in BTB Lab, my for loop program confronts with an invalid bne jump operation, which makes it like an endless while loop. The key of this issue is that I distinguish ```misPredict``` with ```brTaken```. The former one caused by ```fEpoch != eEpoch``` and the latter one caused by ```brAddr != predAddr```. To slove this problem, I update BTB only when ```misPredict && brTaken``` and redirect my PC with ```correctPc``` whenever ```misPredict``` happens.

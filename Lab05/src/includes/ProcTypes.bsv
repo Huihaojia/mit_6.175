@@ -166,7 +166,7 @@ typedef struct {
 } Execute2FetchEpoch deriving(Bits, Eq, FShow);
 
 typedef struct {
-	EpochSz			eEpoch;
+	Addr			correctPc;
 } Execute2FetchBtb deriving(Bits, Eq, FShow);
 
 // function code

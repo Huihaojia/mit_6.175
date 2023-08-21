@@ -47,10 +47,9 @@ module mkProc(Proc);
 
         if(e2f.notEmpty) begin
             fEpoch <= !fEpoch;
-            newPc = btbf.predPc(pc);
+            newPc = redirect.correctPc;
             e2f.deq;
         end else begin
-            newPc = pc + 4;
             f2e.enq(Fetch2ExecuteEpoch{lastPc: pc, nextPc: newPc, inst: newInst, fEpoch: fEpoch});
         end
 
@@ -76,7 +75,7 @@ module mkProc(Proc);
         $display("pc: %h inst: (%h) expanded: ", fetch.lastPc, inst, showInst(inst));
         $fflush(stdout);
 
-        if(eInst.iType == Unsupported && inst != 0) begin
+        if(eInst.iType == Unsupported) begin
             $fwrite(stderr, "ERROR: Executing unsupported instruction at pc: %x. Exiting\n", fetch.lastPc);
             $finish;
         end
@@ -87,10 +86,12 @@ module mkProc(Proc);
 
         csrf.wr(eInst.iType == Csrw ? eInst.csr : Invalid, eInst.data);
 
-        if (eInst.mispredict && eInst.brTaken) begin
-            btbf.update(fetch.lastPc, eInst.addr);
+        if (eInst.mispredict) begin
             eEpoch <= !eEpoch;
-            e2f.enq(Execute2FetchBtb{eEpoch: eEpoch});
+            if (eInst.brTaken) begin
+                btbf.update(fetch.lastPc, eInst.addr);
+            end
+            e2f.enq(Execute2FetchBtb{correctPc: eInst.addr});
             f2e.clear;
         end else begin
             f2e.deq;
