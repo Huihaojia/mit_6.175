@@ -29,7 +29,7 @@ public:
     virtual void sendMessage(uint32_t msg){
 			FILE *fp;
 			fp = fopen("./log", "a");
-		    uint32_t type = msg>>16;
+		    uint32_t type = msg >> 16;
             uint32_t data = msg & ( (1<<16) - 1);
 			if(type == 0) {
 				if(data == 0) {
@@ -47,7 +47,7 @@ public:
 				print_int = uint32_t(data);
 			} else if(type == 3) {
 				print_int |= uint32_t(data) << 16;
-				fprintf(fp, "cycles: \t%d", print_int);
+				fprintf(fp, "%d", print_int);
 				fprintf(stderr, "%d", print_int);
 			} 
 			fclose(fp);

@@ -1,0 +1,238 @@
+mkdir -p buildDir
+bsc -u -sim -bdir buildDir -info-dir buildDir -simdir buildDir -vdir buildDir -p +:"./includes" -aggressive-conditions SixStage.bsv
+checking package dependencies
+compiling SixStage.bsv
+code generation for mkProc starts
+Warning: "SixStage.bsv", line 63, column 8: (G0010)
+  Rule "iMemInit_request_put" was treated as more urgent than
+  "test". Conflicts:
+    "iMemInit_request_put" cannot fire before "test":
+      calls to
+	iMem_memInit_initialized.write vs. iMem_memInit_initialized.read
+    "test" cannot fire before "iMemInit_request_put":
+      calls to
+	iMem_memInit_initialized.write vs. iMem_memInit_initialized.read
+Warning: "SixStage.bsv", line 63, column 8: (G0010)
+  Rule "dMemInit_request_put" was treated as more urgent than
+  "test". Conflicts:
+    "dMemInit_request_put" cannot fire before "test":
+      calls to
+	dMem_memInit_initialized.write vs. dMem_memInit_initialized.read
+    "test" cannot fire before "dMemInit_request_put":
+      calls to
+	dMem_memInit_initialized.write vs. dMem_memInit_initialized.read
+Warning: "SixStage.bsv", line 63, column 8: (G0010)
+  Rule "doFetch" was treated as more urgent than "doExecute". Conflicts:
+    "doFetch" cannot fire before "doExecute":
+      calls to
+	pcReg_wires_0.wget vs. pcReg_wires_0.wset
+	pcReg_wires_0.whas vs. pcReg_wires_0.wset
+	exeEpoch_wires_0.wget vs. exeEpoch_wires_0.wset
+	exeEpoch_wires_0.whas vs. exeEpoch_wires_0.wset
+    "doExecute" cannot fire before "doFetch":
+      calls to
+	btb_targets_0.write vs. btb_targets_0.read
+	btb_targets_1.write vs. btb_targets_1.read
+	btb_targets_2.write vs. btb_targets_2.read
+	btb_targets_3.write vs. btb_targets_3.read
+	btb_targets_4.write vs. btb_targets_4.read
+	btb_targets_5.write vs. btb_targets_5.read
+	btb_targets_6.write vs. btb_targets_6.read
+	btb_targets_7.write vs. btb_targets_7.read
+	btb_targets_8.write vs. btb_targets_8.read
+	btb_targets_9.write vs. btb_targets_9.read
+	btb_targets_10.write vs. btb_targets_10.read
+	btb_targets_11.write vs. btb_targets_11.read
+	btb_targets_12.write vs. btb_targets_12.read
+	btb_targets_13.write vs. btb_targets_13.read
+	btb_targets_14.write vs. btb_targets_14.read
+	btb_targets_15.write vs. btb_targets_15.read
+	btb_targets_16.write vs. btb_targets_16.read
+	btb_targets_17.write vs. btb_targets_17.read
+	btb_targets_18.write vs. btb_targets_18.read
+	btb_targets_19.write vs. btb_targets_19.read
+	btb_targets_20.write vs. btb_targets_20.read
+	btb_targets_21.write vs. btb_targets_21.read
+	btb_targets_22.write vs. btb_targets_22.read
+	btb_targets_23.write vs. btb_targets_23.read
+	btb_targets_24.write vs. btb_targets_24.read
+	btb_targets_25.write vs. btb_targets_25.read
+	btb_targets_26.write vs. btb_targets_26.read
+	btb_targets_27.write vs. btb_targets_27.read
+	btb_targets_28.write vs. btb_targets_28.read
+	btb_targets_29.write vs. btb_targets_29.read
+	btb_targets_30.write vs. btb_targets_30.read
+	btb_targets_31.write vs. btb_targets_31.read
+	btb_targets_32.write vs. btb_targets_32.read
+	btb_targets_33.write vs. btb_targets_33.read
+	btb_targets_34.write vs. btb_targets_34.read
+	btb_targets_35.write vs. btb_targets_35.read
+	btb_targets_36.write vs. btb_targets_36.read
+	btb_targets_37.write vs. btb_targets_37.read
+	btb_targets_38.write vs. btb_targets_38.read
+	btb_targets_39.write vs. btb_targets_39.read
+	btb_targets_40.write vs. btb_targets_40.read
+	btb_targets_41.write vs. btb_targets_41.read
+	btb_targets_42.write vs. btb_targets_42.read
+	btb_targets_43.write vs. btb_targets_43.read
+	btb_targets_44.write vs. btb_targets_44.read
+	btb_targets_45.write vs. btb_targets_45.read
+	btb_targets_46.write vs. btb_targets_46.read
+	btb_targets_47.write vs. btb_targets_47.read
+	btb_targets_48.write vs. btb_targets_48.read
+	btb_targets_49.write vs. btb_targets_49.read
+	btb_targets_50.write vs. btb_targets_50.read
+	btb_targets_51.write vs. btb_targets_51.read
+	btb_targets_52.write vs. btb_targets_52.read
+	btb_targets_53.write vs. btb_targets_53.read
+	btb_targets_54.write vs. btb_targets_54.read
+	btb_targets_55.write vs. btb_targets_55.read
+	btb_targets_56.write vs. btb_targets_56.read
+	btb_targets_57.write vs. btb_targets_57.read
+	btb_targets_58.write vs. btb_targets_58.read
+	btb_targets_59.write vs. btb_targets_59.read
+	btb_targets_60.write vs. btb_targets_60.read
+	btb_targets_61.write vs. btb_targets_61.read
+	btb_targets_62.write vs. btb_targets_62.read
+	btb_targets_63.write vs. btb_targets_63.read
+	btb_tags_0.write vs. btb_tags_0.read
+	btb_tags_1.write vs. btb_tags_1.read
+	btb_tags_2.write vs. btb_tags_2.read
+	btb_tags_3.write vs. btb_tags_3.read
+	btb_tags_4.write vs. btb_tags_4.read
+	btb_tags_5.write vs. btb_tags_5.read
+	btb_tags_6.write vs. btb_tags_6.read
+	btb_tags_7.write vs. btb_tags_7.read
+	btb_tags_8.write vs. btb_tags_8.read
+	btb_tags_9.write vs. btb_tags_9.read
+	btb_tags_10.write vs. btb_tags_10.read
+	btb_tags_11.write vs. btb_tags_11.read
+	btb_tags_12.write vs. btb_tags_12.read
+	btb_tags_13.write vs. btb_tags_13.read
+	btb_tags_14.write vs. btb_tags_14.read
+	btb_tags_15.write vs. btb_tags_15.read
+	btb_tags_16.write vs. btb_tags_16.read
+	btb_tags_17.write vs. btb_tags_17.read
+	btb_tags_18.write vs. btb_tags_18.read
+	btb_tags_19.write vs. btb_tags_19.read
+	btb_tags_20.write vs. btb_tags_20.read
+	btb_tags_21.write vs. btb_tags_21.read
+	btb_tags_22.write vs. btb_tags_22.read
+	btb_tags_23.write vs. btb_tags_23.read
+	btb_tags_24.write vs. btb_tags_24.read
+	btb_tags_25.write vs. btb_tags_25.read
+	btb_tags_26.write vs. btb_tags_26.read
+	btb_tags_27.write vs. btb_tags_27.read
+	btb_tags_28.write vs. btb_tags_28.read
+	btb_tags_29.write vs. btb_tags_29.read
+	btb_tags_30.write vs. btb_tags_30.read
+	btb_tags_31.write vs. btb_tags_31.read
+	btb_tags_32.write vs. btb_tags_32.read
+	btb_tags_33.write vs. btb_tags_33.read
+	btb_tags_34.write vs. btb_tags_34.read
+	btb_tags_35.write vs. btb_tags_35.read
+	btb_tags_36.write vs. btb_tags_36.read
+	btb_tags_37.write vs. btb_tags_37.read
+	btb_tags_38.write vs. btb_tags_38.read
+	btb_tags_39.write vs. btb_tags_39.read
+	btb_tags_40.write vs. btb_tags_40.read
+	btb_tags_41.write vs. btb_tags_41.read
+	btb_tags_42.write vs. btb_tags_42.read
+	btb_tags_43.write vs. btb_tags_43.read
+	btb_tags_44.write vs. btb_tags_44.read
+	btb_tags_45.write vs. btb_tags_45.read
+	btb_tags_46.write vs. btb_tags_46.read
+	btb_tags_47.write vs. btb_tags_47.read
+	btb_tags_48.write vs. btb_tags_48.read
+	btb_tags_49.write vs. btb_tags_49.read
+	btb_tags_50.write vs. btb_tags_50.read
+	btb_tags_51.write vs. btb_tags_51.read
+	btb_tags_52.write vs. btb_tags_52.read
+	btb_tags_53.write vs. btb_tags_53.read
+	btb_tags_54.write vs. btb_tags_54.read
+	btb_tags_55.write vs. btb_tags_55.read
+	btb_tags_56.write vs. btb_tags_56.read
+	btb_tags_57.write vs. btb_tags_57.read
+	btb_tags_58.write vs. btb_tags_58.read
+	btb_tags_59.write vs. btb_tags_59.read
+	btb_tags_60.write vs. btb_tags_60.read
+	btb_tags_61.write vs. btb_tags_61.read
+	btb_tags_62.write vs. btb_tags_62.read
+	btb_tags_63.write vs. btb_tags_63.read
+	btb_valid_0.write vs. btb_valid_0.read
+	btb_valid_1.write vs. btb_valid_1.read
+	btb_valid_2.write vs. btb_valid_2.read
+	btb_valid_3.write vs. btb_valid_3.read
+	btb_valid_4.write vs. btb_valid_4.read
+	btb_valid_5.write vs. btb_valid_5.read
+	btb_valid_6.write vs. btb_valid_6.read
+	btb_valid_7.write vs. btb_valid_7.read
+	btb_valid_8.write vs. btb_valid_8.read
+	btb_valid_9.write vs. btb_valid_9.read
+	btb_valid_10.write vs. btb_valid_10.read
+	btb_valid_11.write vs. btb_valid_11.read
+	btb_valid_12.write vs. btb_valid_12.read
+	btb_valid_13.write vs. btb_valid_13.read
+	btb_valid_14.write vs. btb_valid_14.read
+	btb_valid_15.write vs. btb_valid_15.read
+	btb_valid_16.write vs. btb_valid_16.read
+	btb_valid_17.write vs. btb_valid_17.read
+	btb_valid_18.write vs. btb_valid_18.read
+	btb_valid_19.write vs. btb_valid_19.read
+	btb_valid_20.write vs. btb_valid_20.read
+	btb_valid_21.write vs. btb_valid_21.read
+	btb_valid_22.write vs. btb_valid_22.read
+	btb_valid_23.write vs. btb_valid_23.read
+	btb_valid_24.write vs. btb_valid_24.read
+	btb_valid_25.write vs. btb_valid_25.read
+	btb_valid_26.write vs. btb_valid_26.read
+	btb_valid_27.write vs. btb_valid_27.read
+	btb_valid_28.write vs. btb_valid_28.read
+	btb_valid_29.write vs. btb_valid_29.read
+	btb_valid_30.write vs. btb_valid_30.read
+	btb_valid_31.write vs. btb_valid_31.read
+	btb_valid_32.write vs. btb_valid_32.read
+	btb_valid_33.write vs. btb_valid_33.read
+	btb_valid_34.write vs. btb_valid_34.read
+	btb_valid_35.write vs. btb_valid_35.read
+	btb_valid_36.write vs. btb_valid_36.read
+	btb_valid_37.write vs. btb_valid_37.read
+	btb_valid_38.write vs. btb_valid_38.read
+	btb_valid_39.write vs. btb_valid_39.read
+	btb_valid_40.write vs. btb_valid_40.read
+	btb_valid_41.write vs. btb_valid_41.read
+	btb_valid_42.write vs. btb_valid_42.read
+	btb_valid_43.write vs. btb_valid_43.read
+	btb_valid_44.write vs. btb_valid_44.read
+	btb_valid_45.write vs. btb_valid_45.read
+	btb_valid_46.write vs. btb_valid_46.read
+	btb_valid_47.write vs. btb_valid_47.read
+	btb_valid_48.write vs. btb_valid_48.read
+	btb_valid_49.write vs. btb_valid_49.read
+	btb_valid_50.write vs. btb_valid_50.read
+	btb_valid_51.write vs. btb_valid_51.read
+	btb_valid_52.write vs. btb_valid_52.read
+	btb_valid_53.write vs. btb_valid_53.read
+	btb_valid_54.write vs. btb_valid_54.read
+	btb_valid_55.write vs. btb_valid_55.read
+	btb_valid_56.write vs. btb_valid_56.read
+	btb_valid_57.write vs. btb_valid_57.read
+	btb_valid_58.write vs. btb_valid_58.read
+	btb_valid_59.write vs. btb_valid_59.read
+	btb_valid_60.write vs. btb_valid_60.read
+	btb_valid_61.write vs. btb_valid_61.read
+	btb_valid_62.write vs. btb_valid_62.read
+	btb_valid_63.write vs. btb_valid_63.read
+Warning: "SixStage.bsv", line 63, column 8: (G0010)
+  Rule "doExecute" was treated as more urgent than "doWriteback". Conflicts:
+    "doExecute" cannot fire before "doWriteback":
+      calls to
+	sb_f_deqEn_wires_0.wset vs. sb_f_deqEn_wires_0.wset
+	sb_f_deqEn_ignored_wires_0.wset vs. sb_f_deqEn_ignored_wires_0.wset
+    "doWriteback" cannot fire before "doExecute":
+      calls to
+	sb_f_deqEn_wires_0.wset vs. sb_f_deqEn_wires_0.wset
+	sb_f_deqEn_ignored_wires_0.wset vs. sb_f_deqEn_ignored_wires_0.wset
+Elaborated module file created: buildDir/mkProc.ba
+All packages are up to date.
+rm -rf buildDir

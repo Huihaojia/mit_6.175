@@ -21,6 +21,10 @@ asm_tests=(
 	bpred_bht bpred_j bpred_ras
 	cache
 	)
+simple_tests=(
+	bpred_bht bpred_j bpred_ras
+	cache
+)
 
 vmh_dir=programs/build/assembly/vmh
 log_dir=logs
@@ -35,7 +39,8 @@ pkill ubuntu.exe
 
 # run each test
 for test_name in ${asm_tests[@]}; do
-	echo "-- assembly test: ${test_name} --"
+	echo "-- Assemble Results--" > ./bluesim/log
+	echo "-- assembly test: ${test_name} --" >> ./bluesim/log
 	# copy vmh file
 	mem_file=${vmh_dir}/${test_name}.riscv.vmh
 	if [ ! -f $mem_file ]; then

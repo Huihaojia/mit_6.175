@@ -43,6 +43,7 @@ module mkDelayedMemory(DelayedMemory);
 
     method ActionValue#(MemResp) resp() if (memInit.done());
         let data = outFifo.first();
+        // $display("@ Data Response");
         outFifo.deq();
         return data;
     endmethod

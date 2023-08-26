@@ -3,21 +3,31 @@ import ProcTypes::*;
 `ifdef TWOSTAGE
 import TwoStage::*;
 `endif
+
 `ifdef TWOSTAGEBTB
 import TwoStageBTB::*;
 `endif
-`ifdef SIXCYCLE
+
+`ifdef SIXSTAGE
 import SixStage::*;
 `endif
+
+`ifdef SIXSTAGETRUE
+import SixStageTrue::*;
+`endif
+
 `ifdef SIXSTAGEBHT
 import SixStageBHT::*;
 `endif
+
 `ifdef SIXSTAGEBONUS
 import SixStageBonus::*;
 `endif
+
 `ifdef SIXSTAGERAS
 import SixStageRAS::*;
 `endif
+
 
 import Ifc::*;
 import ProcTypes::*;

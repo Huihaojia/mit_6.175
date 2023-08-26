@@ -88,3 +88,9 @@ In BTB Lab, my program cannot exit correctly. PC have arrived at ```j	75c <exit+
 #### 2. Dead loop
 
 Also, in BTB Lab, my for loop program confronts with an invalid bne jump operation, which makes it like an endless while loop. The key of this issue is that I distinguish ```misPredict``` with ```brTaken```. The former one caused by ```fEpoch != eEpoch``` and the latter one caused by ```brAddr != predAddr```. To slove this problem, I update BTB only when ```misPredict && brTaken``` and redirect my PC with ```correctPc``` whenever ```misPredict``` happens.
+
+## Lab06: RISC-V Processor with Six-Stage Pipeline and Branch Prediction
+
+### The relationship among exeEpoch, misPredic, and brTaken
+
+Under the assumption of one global epoch in six stage RISC-V, if misPredic is asserted, exeEpoch is reversed, which caused the difference with exeEpoch fired from Ifetch stage.

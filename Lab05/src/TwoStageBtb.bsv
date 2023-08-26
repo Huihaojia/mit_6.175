@@ -64,6 +64,8 @@ module mkProc(Proc);
         Data rVal2 = rf.rd2(fromMaybe(?, dInst.src2));
 
         Data csrVal = csrf.rd(fromMaybe(?, dInst.csr));
+		
+        $display("# rval1 = %x, rval2 = %x", rVal1, rVal2);
 
         ExecInst eInst = exec(dInst, rVal1, rVal2, fetch.lastPc, fetch.nextPc, csrVal);  
         if(eInst.iType == Ld) begin
@@ -87,13 +89,13 @@ module mkProc(Proc);
         csrf.wr(eInst.iType == Csrw ? eInst.csr : Invalid, eInst.data);
 
         if (eInst.mispredict) begin
+            $display("# Mispredict at PC: %x, rVal1: %x", fetch.lastPc, eInst.addr);
             eEpoch <= !eEpoch;
-            if (eInst.brTaken) begin
-                btbf.update(fetch.lastPc, eInst.addr);
-            end
+            btbf.update(fetch.lastPc, eInst.addr);
             e2f.enq(Execute2FetchBtb{correctPc: eInst.addr});
             f2e.clear;
         end else begin
+			$display("# Execute Work at PC = %x, result = %x", fetch.lastPc, eInst.data);
             f2e.deq;
         end
     endrule

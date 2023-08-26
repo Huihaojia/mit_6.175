@@ -103,7 +103,6 @@ module mkProc(Proc);
 			pcReg[1] <= r.nextPc;
 			exeEpoch <= !exeEpoch; // flip epoch
 			btb.update(r.pc, r.nextPc); // train BTB
-			$display("Fetch: Mispredict, redirected by Execute");
 		end
 		// reset EHR
 		exeRedirect[1] <= Invalid;
