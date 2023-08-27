@@ -20,6 +20,7 @@ pkill bluetcl
 pkill ubuntu.exe
 
 # run each test
+echo "-- start --" > ./bluesim/log
 for test_name in ${asm_tests[@]}; do
 	echo "-- benchmark test: ${test_name} --"
 	# copy vmh file
