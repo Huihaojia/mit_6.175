@@ -26,6 +26,7 @@ module mkBht(Bht#(bhtIndex)) provisos( Add#(bhtIndex, a__, 32), NumAlias#(TExp#(
         let newDP = oldDPBits;
         if (taken) begin
             newDP = newDP + 1;
+            // Keep the DP at max value
             newDP = newDP == minDP ? maxDP : newDP;
         end
         else begin

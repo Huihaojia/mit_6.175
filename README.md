@@ -94,3 +94,67 @@ Also, in BTB Lab, my for loop program confronts with an invalid bne jump operati
 ### The relationship among exeEpoch, misPredic, and brTaken
 
 Under the assumption of one global epoch in six stage RISC-V, if misPredic is asserted, exeEpoch is reversed, which caused the difference with exeEpoch fired from Ifetch stage.
+
+### Discussion Question 6: BHT Planning
+
+#### 1. Where will the BHT be positioned in the pipeline?
+
+Because we got brTaken in Execute Stage, we should update Branch History Table (BHT) also at Execute Stage. Meanwhile, we got predicted PC in Fetch, so the ppcDP method should be positioned at Fetch Stage. In a word, the BHT should be positioned between Fetch and Execute, just like BTB.
+
+#### 2. What pipeline stage performs lookups into the BHT?
+
+As mentioned above, Execute lookups into BHT for updating and Fetch lookups into BHT for prediction.
+
+#### 3. In which pipeline stage will the BHT prediction be used?
+
+The BHT prediction will be used at Fetch Stage.
+
+#### 4. Will the BHT prediction need to be passed between pipeline stages?
+
+If misprediction happens in Execute Stage and caused a divergence between fetch epoch and execute epoch, this divergence message should be passed to the following pipeline stages to clear the Scoreboard updated by mis-fetched instructions.
+
+#### 5. How to redirect PC using BHT prediction?
+
+Under a global Epoch strategy, there are 3 steps to redirect PC:
+
++ Step 1: The mispredict message is produced by Execute Stage and push the redirect PC addr into FIFO. Then it caused a mismatch between fetch epoch and execute epoch in the next clock and update DP bits in BHT.
++ Step 2: The Fetch stage catches the redirect message and update PC with the correct PC. Meanwhile, the fetch epoch is updated with, for instance, counter and keep its pace with execute epoch.
++ Step 3: The fetch stage pushes the up-to-date pc to decode and predict the next PC with BHT.
+
+#### 6. Do you need to add a new epoch?
+
+I think either is OK. One global epoch is ready to take over this job.
+
+#### 7. How to handle the redirect messages?
+
+I have answer the redirect procedure in Question 5.
+
+#### 8. Do you need to change anything to the current instruction and its data structures if redirecting?
+
+Yes, I have introduced poision bit from Execute to Memory and from Memory to Writeback.
+
+#### 9. How will you train the BHT?
+
+![Bimodel predictor](https://pic3.zhimg.com/96c0731181d342c4c7e8c4fdaa1c7946_r.jpg)
+
+I trained the BHT with Bimodel predictor, which has four stages called "Strongly not, Weakly not, Weakly, Strongly". The prediction is taken only when the predictor is in "Strongly" stage and not taken when "Weakly". According to the assessment, the accuracy of this predictor can reach 93.5%.
+
+#### 10. Which stage produces training data for the BHT?
+
+The Execute produces training data for BHT through the "Branch Taken" signal.
+
+#### 11. Which stage will use the interface method to train the BHT?
+
+Also the Execute stage i think.
+
+#### 12. How to send training data?
+
+We can use a register file to store the stage of each PC and sending it through register index.
+
+#### 13. For which instructions will you train the BHT?
+
+Every branch instruction should be trained ,such as J, Jr, Br, Auipc.
+
+#### 14. How will you know if your BHT works?
+
+If the misprediction occurs every two instructions, we will know whether the BHT works. Without the BHT, the flush will happens to each pipeline every cycle, which is caused by misprediction. Thus, we can use a case that introducing parity into loop kernel to verify the functionality of BHT.

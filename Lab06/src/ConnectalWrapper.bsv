@@ -12,12 +12,16 @@ import TwoStageBTB::*;
 import SixStage::*;
 `endif
 
+`ifdef SIXSTAGEBHT
+import SixStageBht::*;
+`endif
+
 `ifdef SIXSTAGETRUE
 import SixStageTrue::*;
 `endif
 
-`ifdef SIXSTAGEBHT
-import SixStageBHT::*;
+`ifdef SIXSTAGEBHTOP
+import SixStageBhtOp::*;
 `endif
 
 `ifdef SIXSTAGEBONUS
@@ -25,7 +29,7 @@ import SixStageBonus::*;
 `endif
 
 `ifdef SIXSTAGERAS
-import SixStageRAS::*;
+import SixStageRas::*;
 `endif
 
 
