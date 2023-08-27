@@ -108,11 +108,16 @@ module mkProc(Proc);
 		if (e2fFifo.notEmpty) begin
 			let redirect = e2fFifo.first;
 			e2fFifo.deq;
+			if (d2fFifo.notEmpty) begin
+				d2fFifo.deq;
+			end
 			newPc = redirect.nextPc;
+			$display("& Redirected by Execute");
 		end else if (d2fFifo.notEmpty) begin
 			let redirect = d2fFifo.first;
 			d2fFifo.deq;
 			newPc = redirect.nextPc;
+			$display("& Redirected by Decode");
 		end else begin
 			newPc = bht.ppcDP(pcReg[0], newPc);
 			iMem.req(MemReq {op: Ld, addr: pcReg[0], data: ?});
@@ -122,7 +127,7 @@ module mkProc(Proc);
 					exeEpoch:	exeEpoch,
 					decEpoch:	decEpoch
 				});
-			// $display("# Fetch Work at PC = %x", pcReg[0]);
+			$display("# Fetch Work at PC = %x", pcReg[0]);
 		end
 		pcReg[0] <= newPc;
 	endrule
@@ -152,11 +157,10 @@ module mkProc(Proc);
 					}
 				);
 				f2dFifo.deq;
-				$display("Decode: PC = %x, inst = %x, expanded = ", f2d.pc, fetchInst, showInst(fetchInst));
+				$display("# Decode: PC = %x, inst = %x, expanded = ", f2d.pc, fetchInst, showInst(fetchInst));
 			end else begin
 				f2dFifo.clear;
 			end
-			// $display("# Decode Work at PC = %x", f2d.pc);
 		end else begin
 			f2dFifo.clear;
 			// $display("Decode: Mispredict, redirected by Execute");
@@ -189,7 +193,7 @@ module mkProc(Proc);
 				// $display("RFetch Stalled: PC = %x", d2r.pc);
 			end
         	$display("# rval1 = %x, rval2 = %x", rval1, rval2);
-			// $display("# Rfetch Work at PC = %x, rval1 = %x, rval2 = %x", d2r.pc, rval1, rval2);
+			$display("# Rfetch Work at PC = %x, rval1 = %x, rval2 = %x", d2r.pc, rval1, rval2);
 		end else begin
 			d2rfFifo.clear;
 		end
@@ -217,7 +221,7 @@ module mkProc(Proc);
 			end
 
 			if (inst.mispredict) begin
-				// $display("Execute finds misprediction: PC = %x, correctPc = %x", r2e.pc, inst.addr);
+				$display("& Execute finds misprediction: PC = %x, correctPc = %x", r2e.pc, inst.addr);
 				bht.update(r2e.pc, inst.brTaken);
 				if (inst.brTaken) begin
 					btb.update(r2e.pc, inst.addr);
@@ -234,8 +238,9 @@ module mkProc(Proc);
 			end
 		end else begin
 			poision = True;
+			// You cannot clear this FIFO because there are still flags in Scoreboard ready to clear.
 			rf2eFifo.deq;
-			// $display("Execute: Kill instruction");
+			$display("& Execute: Kill instruction");
 		end
 		e2mFifo.enq( Execute2Memory {
 			iType:		inst.iType,

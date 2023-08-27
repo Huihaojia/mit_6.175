@@ -40,7 +40,7 @@ pkill ubuntu.exe
 
 # run each test
 echo "-- start --" > ./bluesim/log
-for test_name in ${asm_tests[@]}; do
+for test_name in ${simple_test[@]}; do
 	echo "-- assembly test: ${test_name} --" >> ./bluesim/log
 	# copy vmh file
 	mem_file=${vmh_dir}/${test_name}.riscv.vmh
