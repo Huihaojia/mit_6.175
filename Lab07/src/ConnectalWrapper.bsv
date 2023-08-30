@@ -1,36 +1,13 @@
 import ProcTypes::*;
 
-`ifdef TWOSTAGE
-import TwoStage::*;
+`ifdef WITHOUTCACHE
+import WithoutCache::*;
 `endif
 
-`ifdef TWOSTAGEBTB
-import TwoStageBTB::*;
+`ifdef WITHCACHE
+import WithCache::*;
 `endif
 
-`ifdef SIXSTAGE
-import SixStage::*;
-`endif
-
-`ifdef SIXSTAGEBHT
-import SixStageBht::*;
-`endif
-
-`ifdef SIXSTAGETRUE
-import SixStageTrue::*;
-`endif
-
-`ifdef SIXSTAGEBHTOP
-import SixStageBhtOp::*;
-`endif
-
-`ifdef SIXSTAGEBONUS
-import SixStageBonus::*;
-`endif
-
-`ifdef SIXSTAGERAS
-import SixStageRas::*;
-`endif
 
 
 import Ifc::*;
@@ -38,17 +15,21 @@ import ProcTypes::*;
 import Types::*;
 import Ehr::*;
 
+import SimMem::*;
+
 interface ConnectalWrapper;
    interface ConnectalProcRequest connectProc;
 endinterface
 
 module [Module] mkConnectalWrapper#(ConnectalProcIndication ind)(ConnectalWrapper);
    Proc m <- mkProc();
+   mkSimMem(m.ddr3Client);
 
    rule relayMessage;
 	   let mess <- m.cpuToHost();
         ind.sendMessage(pack(mess));	
    endrule
+   
    interface ConnectalProcRequest connectProc;
       method Action hostToCpu(Bit#(32) startpc);
          $display("Received software req to start pc\n");

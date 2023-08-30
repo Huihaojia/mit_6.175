@@ -5,6 +5,8 @@ import Fifo::*;
 import CMemTypes::*;
 import Memory::*;
 
+import MemTypes::*;
+
 module mkWideMemInitDDR3( Fifo#(n,DDR3_Req) reqQ, WideMemInitIfc ifc );
     // logic to initialize DRAM
     Reg#(Bool) initialized <- mkReg(False);
@@ -21,7 +23,7 @@ module mkWideMemInitDDR3( Fifo#(n,DDR3_Req) reqQ, WideMemInitIfc ifc );
 				};
                 reqQ.enq( ddr3_req );
             end
-            tagged InitDone: begin
+            tagged WideInitDone: begin
                 initialized <= True;
 				//$display("WideMemInit: init mem done");
             end

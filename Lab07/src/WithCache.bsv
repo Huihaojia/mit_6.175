@@ -17,7 +17,15 @@ import Btb::*;
 import Scoreboard::*;
 import Bht::*;
 
-import DelayedMemory::*;
+// Cache related
+import MemTypes::*;
+import MemUtil::*;
+import WideMemInit::*;
+import CacheTypes::*;
+import Memory::*;
+import ClientServer::*;
+import CacheMy::*;
+// import Cache::*;
 
 // Data structure for Fetch to Execute stage
 typedef struct {
@@ -73,16 +81,29 @@ typedef struct {
 
 (* synthesize *)
 module mkProc(Proc);
-    Ehr#(2, Addr) pcReg <- mkEhr(?);
-    RFile            rf <- mkRFile;
-	Scoreboard#(8)   sb <- mkCFScoreboard;
-
-	DelayedMemory  iMem <- mkDelayedIMemory;
-    DelayedMemory  dMem <- mkDelayedMemory;
-
+    Ehr#(2, Addr) 	pcReg 	<- mkEhr(?);
+    RFile			rf 		<- mkRFile;
+	Scoreboard#(8)	sb 		<- mkCFScoreboard;
     CsrFile        csrf <- mkCsrFile;
     Btb#(6)         btb <- mkBtb;
 	Bht#(8)			bht <- mkBht;
+
+	// Block happened, so I changed depth into 4
+	Fifo#(4, DDR3_Req)	ddr3ReqFifo		<- mkCFFifo;
+	Fifo#(4, DDR3_Resp)	ddr3RespFifo	<- mkCFFifo;
+	WideMemInitIfc		memInitIfc		<- mkWideMemInitDDR3(ddr3ReqFifo);
+
+    Bool memReady = memInitIfc.done;
+	// Bool memReady = True;
+	WideMem			wideMemWrapper <- mkWideMemFromDDR3(ddr3ReqFifo, ddr3RespFifo);
+	Vector#(2, WideMem) wideMems <- mkSplitWideMem(memReady && csrf.started, wideMemWrapper);
+	
+	// Cache iMem <- mkCache(wideMems[1]);
+	// Cache dMem <- mkCache(wideMems[0]);
+	CacheMy iMem <- mkCacheMy;
+	CacheMy dMem <- mkCacheMy;
+	// DelayedMemory  iMem <- mkDelayedIMemory;
+    // DelayedMemory  dMem <- mkDelayedMemory;
 
 	Reg#(Bool) exeEpoch <- mkReg(False);
 	Reg#(Bool) decEpoch <- mkReg(False);
@@ -93,18 +114,43 @@ module mkProc(Proc);
 	Fifo#(2, ExeRedirect)		r2fFifo		<- mkCFFifo;
 
 	// FIFO between two stages
-	Fifo#(4, Fetch2Decode) 		f2dFifo		<- mkCFFifo;
-	Fifo#(4, Decode2Rfetch) 	d2rfFifo 	<- mkCFFifo;
-	Fifo#(4, Rfetch2Execute) 	rf2eFifo 	<- mkCFFifo;
-	Fifo#(4, Execute2Memory) 	e2mFifo 	<- mkCFFifo;
-	Fifo#(4, Memory2Writeback) 	m2wFifo 	<- mkCFFifo;
+	Fifo#(8, Fetch2Decode) 		f2dFifo		<- mkCFFifo;
+	Fifo#(8, Decode2Rfetch) 	d2rfFifo 	<- mkCFFifo;
+	Fifo#(8, Rfetch2Execute) 	rf2eFifo 	<- mkCFFifo;
+	Fifo#(8, Execute2Memory) 	e2mFifo 	<- mkCFFifo;
+	Fifo#(8, Memory2Writeback) 	m2wFifo 	<- mkCFFifo;
 
+	rule iCacheToMemReq if (csrf.started);
+		$display("& iCache request to Mem");
+		let iReq <- iMem.memReq;
+		wideMems[1].req(iReq);
+	endrule
 
-    Bool memReady = iMem.init.done && dMem.init.done;
+	rule dCacheToMemReq if (csrf.started);
+		$display("& dCache request to Mem");
+		let dReq <- dMem.memReq;
+		wideMems[0].req(dReq);
+	endrule
+
+	rule iCacheToMemResp if (csrf.started);
+		$display("& iCache get response");
+		let iResp <- wideMems[1].resp;
+		iMem.memResp(iResp);
+	endrule
+
+	rule dCacheToMemResp if (csrf.started);
+		$display("& iCache get response");
+		let dResp <- wideMems[0].resp;
+		dMem.memResp(dResp);
+	endrule
+
+	rule drainMemResponses if (!csrf.started);
+		ddr3RespFifo.deq;
+	endrule
+
     rule test (!memReady);
-        let e = tagged InitDone;
-        iMem.init.request.put(e);
-        dMem.init.request.put(e);
+        let e = tagged WideInitDone;
+        memInitIfc.request.put(e);
     endrule
 
 	rule doFetch if (csrf.started);
@@ -160,10 +206,8 @@ module mkProc(Proc);
 					DecodedInst inst = decode(fetchInst);
 					if (inst.iType == J) begin
 						targetAddr = fromMaybe(?, inst.imm) + f2d.pc;
-						jumpFinish = True;
-					end
-					if (targetAddr != f2d.f2ePredPc) begin
 						decEpoch <= !decEpoch;
+						jumpFinish = True;
 						d2fFifo.enq( ExeRedirect {
 							pc:		f2d.pc,
 							nextPc:	targetAddr
@@ -188,7 +232,7 @@ module mkProc(Proc);
 			end
 		end else begin
 			f2dFifo.deq;
-			// $display("Decode: Mispredict, redirected by Execute");
+			$display("Decode: Mispredict, redirected by Execute");
 		end
 	endrule
 
@@ -229,7 +273,7 @@ module mkProc(Proc);
 					sb.insert(decodeInst.dst);
 					d2rfFifo.deq;
 				end else begin
-					// $display("RFetch Stalled: PC = %x", d2r.pc);
+					$display("RFetch Stalled: PC = %x", d2r.pc);
 				end
 				$display("# rval1 = %x, rval2 = %x", rval1, rval2);
 				$display("# Rfetch Work at PC = %x, rval1 = %x, rval2 = %x", d2r.pc, rval1, rval2);
@@ -263,8 +307,8 @@ module mkProc(Proc);
 			end
 
 			if (!r2e.jumpFinish) begin
-				bht.update(r2e.pc, inst.brTaken);
 				if (inst.mispredict) begin
+					bht.update(r2e.pc, inst.brTaken);
 					btb.update(r2e.pc, inst.addr);
 					e2fFifo.enq( ExeRedirect {
 						pc: 	r2e.pc,
@@ -309,16 +353,17 @@ module mkProc(Proc);
 					addr:	e2m.addr,
 					data:	?
 				});
+				$display("# Memory Work: Type = Load, Addr = 0x%x", e2m.addr);
 			end else if (e2m.iType == St) begin
 				dMem.req( MemReq{
 					op:		St,
 					addr:	e2m.addr,
 					data:	e2m.data
 				});
+				$display("# Memory Work: Type = Store, Addr = 0x%x, data = 0x%x", e2m.addr, e2m.data);
 			end
-			// $display("# Memory Work");
 		end else begin
-			// $display("@ Memory Poision");
+			$display("@ Memory Poision");
 		end
 
 		m2wFifo.enq( Memory2Writeback {
@@ -341,29 +386,32 @@ module mkProc(Proc);
 			if (m2w.ldFlag) begin
 				let t <- dMem.resp;
 				data = t;
-			end 
+			end
+
 			csrf.wr(m2w.iType == Csrw ? m2w.csr : Invalid, m2w.data);
 
 			if (isValid(m2w.dst)) begin
 				rf.wr(fromMaybe(?, m2w.dst), data);
 			end
-			// $display("# Writeback Work");
+			$display("# Writeback Work");
+		end else begin
+			$display("@ Writeback Poision");
 		end
 	endrule
 
-    method ActionValue#(CpuToHostData) cpuToHost;
+    method ActionValue#(CpuToHostData) cpuToHost if (csrf.started);
         let ret <- csrf.cpuToHost;
         return ret;
     endmethod
 
-    method Action hostToCpu(Bit#(32) startpc) if ( !csrf.started && memReady );
+    method Action hostToCpu(Bit#(32) startpc) if (!csrf.started && memReady);
 		csrf.start(0); // only 1 core, id = 0
-		// $display("Start at pc 200\n");
-		// $fflush(stdout);
+		$display("Start at pc 200\n");
+		$fflush(stdout);
         pcReg[0] <= startpc;
     endmethod
 
-	interface iMemInit = iMem.init;
-    interface dMemInit = dMem.init;
+	interface WideMemInit memInit = memInitIfc;
+	interface DDR3_Client ddr3Client = toGPClient(ddr3ReqFifo, ddr3RespFifo);
 endmodule
 

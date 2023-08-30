@@ -150,45 +150,33 @@ module mkProc(Proc);
 
 	rule doDecode if (csrf.started);
 		let f2d = f2dFifo.first;
+		f2dFifo.deq;
 		let jumpFinish = False;
 		let targetAddr = f2d.f2ePredPc;
 		Instruction fetchInst <- iMem.resp;
 		$display("& Decode Get an instruction !");
-		if (exeEpoch == f2d.exeEpoch) begin
-			if (rfEpoch == f2d.rfEpoch) begin
-				if (decEpoch == f2d.decEpoch) begin
-					DecodedInst inst = decode(fetchInst);
-					if (inst.iType == J) begin
-						targetAddr = fromMaybe(?, inst.imm) + f2d.pc;
-						jumpFinish = True;
-					end
-					if (targetAddr != f2d.f2ePredPc) begin
-						decEpoch <= !decEpoch;
-						d2fFifo.enq( ExeRedirect {
-							pc:		f2d.pc,
-							nextPc:	targetAddr
-						});
-					end
-					d2rfFifo.enq( Decode2Rfetch {
-						pc:				f2d.pc,
-						d2rPredPc:		targetAddr,
-						inst:			inst,
-						jumpFinish: 	jumpFinish,
-						exeEpoch:		f2d.exeEpoch,
-						rfEpoch:		f2d.rfEpoch
-						}
-					);
-					f2dFifo.deq;
-					$display("# Decode: PC = %x, inst = %x, expanded = ", f2d.pc, fetchInst, showInst(fetchInst));
-				end else begin
-					f2dFifo.deq;
-				end
-			end else begin
-				f2dFifo.deq;
+		if (decEpoch == f2d.decEpoch) begin
+			DecodedInst inst = decode(fetchInst);
+			if (inst.iType == J) begin
+				targetAddr = fromMaybe(?, inst.imm) + f2d.pc;
+				decEpoch <= !decEpoch;
+				jumpFinish = True;
+				d2fFifo.enq( ExeRedirect {
+					pc:		f2d.pc,
+					nextPc:	targetAddr
+				});
 			end
+			d2rfFifo.enq( Decode2Rfetch {
+				pc:				f2d.pc,
+				d2rPredPc:		targetAddr,
+				inst:			inst,
+				jumpFinish: 	jumpFinish,
+				exeEpoch:		f2d.exeEpoch,
+				rfEpoch:		f2d.rfEpoch
+				}
+			);
+			$display("# Decode: PC = %x, inst = %x, expanded = ", f2d.pc, fetchInst, showInst(fetchInst));
 		end else begin
-			f2dFifo.deq;
-			// $display("Decode: Mispredict, redirected by Execute");
 		end
 	endrule
 
@@ -196,46 +184,40 @@ module mkProc(Proc);
 		let d2r = d2rfFifo.first;
 		let decodeInst = d2r.inst;
 		let jumpFinish = d2r.jumpFinish;
-		Addr targetAddr = d2r.d2rPredPc;
+		let targetAddr = d2r.d2rPredPc;
 		
-		if (exeEpoch == d2r.exeEpoch) begin
-			if (rfEpoch == d2r.rfEpoch) begin
-				Data rval1 = rf.rd1(fromMaybe(?, decodeInst.src1));
-				Data rval2 = rf.rd2(fromMaybe(?, decodeInst.src2));
-				Data csrVal = csrf.rd(fromMaybe(?, decodeInst.csr));
+		if (rfEpoch == d2r.rfEpoch) begin
+			Data rval1 = rf.rd1(fromMaybe(?, decodeInst.src1));
+			Data rval2 = rf.rd2(fromMaybe(?, decodeInst.src2));
+			Data csrVal = csrf.rd(fromMaybe(?, decodeInst.csr));
 
-				if (!sb.search1(decodeInst.src1) && !sb.search2(decodeInst.src2)) begin
-					if (decodeInst.iType == Jr) begin
-						jumpFinish = True;
-						targetAddr = {truncateLSB(rval1 + fromMaybe(?, decodeInst.imm)), 1'b0};
-					end
-					if (targetAddr != d2r.d2rPredPc) begin
-						rfEpoch <= !rfEpoch;
-						r2fFifo.enq( ExeRedirect {
-							pc:			d2r.pc,
-							nextPc:		targetAddr
-						});
-					end
-					rf2eFifo.enq( Rfetch2Execute {
-						pc:				d2r.pc,
-						r2ePredPc:		targetAddr,
-						inst: 			d2r.inst,
-						rVal1:			rval1,
-						rVal2:			rval2,
-						csrVal:			csrVal,
-						jumpFinish:		jumpFinish,
-						epoch:			d2r.exeEpoch
+			if (!sb.search1(decodeInst.src1) && !sb.search2(decodeInst.src2)) begin
+				if (decodeInst.iType == Jr) begin
+					targetAddr = {truncateLSB(rval1 + fromMaybe(?, decodeInst.imm)), 1'b0};
+					jumpFinish = True;
+					rfEpoch <= !rfEpoch;
+					r2fFifo.enq( ExeRedirect {
+						pc:			d2r.pc,
+						nextPc:		targetAddr
 					});
-					sb.insert(decodeInst.dst);
-					d2rfFifo.deq;
-				end else begin
-					// $display("RFetch Stalled: PC = %x", d2r.pc);
 				end
-				$display("# rval1 = %x, rval2 = %x", rval1, rval2);
-				$display("# Rfetch Work at PC = %x, rval1 = %x, rval2 = %x", d2r.pc, rval1, rval2);
-			end else begin
+				rf2eFifo.enq( Rfetch2Execute {
+					pc:				d2r.pc,
+					r2ePredPc:		targetAddr,
+					inst: 			d2r.inst,
+					rVal1:			rval1,
+					rVal2:			rval2,
+					csrVal:			csrVal,
+					jumpFinish:		jumpFinish,
+					epoch:			d2r.exeEpoch
+				});
+				sb.insert(decodeInst.dst);
 				d2rfFifo.deq;
+			end else begin
+				// $display("RFetch Stalled: PC = %x", d2r.pc);
 			end
+			$display("# rval1 = %x, rval2 = %x", rval1, rval2);
+			$display("# Rfetch Work at PC = %x, rval1 = %x, rval2 = %x", d2r.pc, rval1, rval2);
 		end else begin
 			d2rfFifo.deq;
 		end
@@ -243,6 +225,7 @@ module mkProc(Proc);
 
 	rule doExecute if (csrf.started);
 		let r2e = rf2eFifo.first;
+		rf2eFifo.deq;
 		Bool poision = False;
 
 		ExecInst inst = exec(
@@ -255,16 +238,14 @@ module mkProc(Proc);
 		);
 
 		if (exeEpoch == r2e.epoch) begin
-			rf2eFifo.deq;
-
 			if(inst.iType == Unsupported) begin
 				$fwrite(stderr, "ERROR: Executing unsupported instruction at pc: %x. Exiting\n", r2e.pc);
 				$finish;
 			end
 
 			if (!r2e.jumpFinish) begin
-				bht.update(r2e.pc, inst.brTaken);
 				if (inst.mispredict) begin
+					bht.update(r2e.pc, inst.brTaken);
 					btb.update(r2e.pc, inst.addr);
 					e2fFifo.enq( ExeRedirect {
 						pc: 	r2e.pc,
@@ -280,10 +261,10 @@ module mkProc(Proc);
 				btb.update(r2e.pc, r2e.r2ePredPc);
 				$display("# Execute J/JR at PC = %x, dest = %x", r2e.pc, r2e.r2ePredPc);
 			end
+
 		end else begin
 			poision = True;
 			// You cannot clear this FIFO because there are still flags in Scoreboard ready to clear.
-			rf2eFifo.deq;
 			$display("& Execute: Kill instruction");
 		end
 		e2mFifo.enq( Execute2Memory {

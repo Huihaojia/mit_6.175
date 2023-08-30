@@ -23,7 +23,7 @@ asm_tests=(
 	)
 
 simple_test=(
-	bpred_ras
+	bpred_bht bpred_j bpred_ras
 	cache
 )
 

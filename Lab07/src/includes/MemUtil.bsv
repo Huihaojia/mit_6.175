@@ -6,6 +6,9 @@ import Fifo::*;
 import Vector::*;
 import Memory::*;
 
+import MemTypes::*;
+
+//  1-bit word enable transform to 4-bits byte enable
 function Bit#(TMul#(n,4)) wordEnToByteEn( Bit#(n) word_en );
     Bit#(TMul#(n,4)) byte_en;
     for( Integer i = 0 ; i < valueOf(n) ; i = i+1 ) begin
@@ -37,9 +40,8 @@ function WideMemReq toWideMemReq( MemReq req );
         write_en = 1 << wordsel;
     end
     Addr addr = req.addr;
-    // CacheLineBytes = 64
-    // addr = 'bxxxxxx000000
-    // 先置零，取出来再用offset取
+    // Cache line words * 4, meaning Cache line length
+    // Cache Tag + Cache Index
     for( Integer i = 0 ; i < valueOf(TLog#(CacheLineBytes)) ; i = i+1 ) begin
         addr[i] = 0;
     end
@@ -47,6 +49,7 @@ function WideMemReq toWideMemReq( MemReq req );
 
     return WideMemReq {
                 write_en: write_en,
+                // Represents Cache Index
                 addr: addr,
                 data: data
             };
@@ -59,6 +62,7 @@ function DDR3_Req toDDR3Req( MemReq req );
 	if( req.op == Ld ) begin
 		byteen = 0;
 	end
+    // Byte Addr
     DDR3Addr addr = truncate( req.addr >> valueOf(TLog#(DDR3DataBytes)) );
     DDR3Data data = replicateWord(req.data);
     return DDR3_Req {
@@ -69,9 +73,14 @@ function DDR3_Req toDDR3Req( MemReq req );
             };
 endfunction
 
-module mkWideMemFromDDR3(   Fifo#(2, DDR3_Req) ddr3ReqFifo,
-                            Fifo#(2, DDR3_Resp) ddr3RespFifo,
+module mkWideMemFromDDR3(   Fifo#(4, DDR3_Req) ddr3ReqFifo,
+                            Fifo#(4, DDR3_Resp) ddr3RespFifo,
                             WideMem ifc );
+    rule judgeBlock;
+        if (!ddr3ReqFifo.notFull)   $display("!!! DDR Req Blocked");
+        if (!ddr3RespFifo.notFull)   $display("!!! DDR Resp Blocked");
+    endrule
+    
     method Action req( WideMemReq x );
         Bool write_en = (x.write_en != 0);
         Bit#(DDR3DataBytes) byte_en = wordEnToByteEn(x.write_en);
@@ -88,6 +97,9 @@ module mkWideMemFromDDR3(   Fifo#(2, DDR3_Req) ddr3ReqFifo,
                                 data:       pack(x.data)
                             };
         ddr3ReqFifo.enq( ddr3_req );
+        // x.addr: 32-bit, 
+        // ddr3_req.address: DDR addr 24-bits = x.addr >> 6
+        // ddr3_req.byteen: enable
         $display("mkWideMemFromDDR3::req : wideMemReq.addr = 0x%0x, ddr3Req.address = 0x%0x, ddr3Req.byteen = 0x%0x", x.addr, ddr3_req.address, ddr3_req.byteen);
     endmethod
     method ActionValue#(WideMemResp) resp;
@@ -101,9 +113,9 @@ endmodule
 module mkSplitWideMem(  Bool initDone, WideMem mem,
                         Vector#(n, WideMem) ifc );
 
-    Vector#(n, Fifo#(2, WideMemReq)) reqFifos <- replicateM(mkCFFifo);
+    Vector#(n, Fifo#(4, WideMemReq)) reqFifos <- replicateM(mkCFFifo);
     Fifo#(TAdd#(n,1), Bit#(TLog#(n))) reqSource <- mkCFFifo;
-    Vector#(n, Fifo#(2, WideMemResp)) respFifos <- replicateM(mkCFFifo);
+    Vector#(n, Fifo#(4, WideMemResp)) respFifos <- replicateM(mkCFFifo);
 
     rule doDDR3Req(initDone);
         Maybe#(Bit#(TLog#(n))) req_index = tagged Invalid;

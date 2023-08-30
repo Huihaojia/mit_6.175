@@ -1,6 +1,6 @@
 #!/bin/bash
 
-asm_tests=(
+bm_tests=(
 	median
 	multiply
 	qsort
@@ -20,8 +20,9 @@ pkill bluetcl
 pkill ubuntu.exe
 
 # run each test
+echo "########## $NAME Bmarks Start ##########" > ./bluesim/log
 echo "-- start --" > ./bluesim/log
-for test_name in ${asm_tests[@]}; do
+for test_name in ${bm_tests[@]}; do
 	echo "-- benchmark test: ${test_name} --"
 	# copy vmh file
 	mem_file=${vmh_dir}/${test_name}.riscv.vmh
@@ -39,3 +40,5 @@ done
 # kill previous bsim if any
 pkill bluetcl
 pkill ubuntu.exe
+
+mv ./bluesim/log ./reports/${NAME}_bmarks.log

@@ -3,6 +3,8 @@ import GetPut::*;
 
 import Types::*;
 
+import MemTypes::*;
+
 typedef Data MemResp;
 
 typedef enum{Ld, St} MemOp deriving(Eq, Bits, FShow);
@@ -33,3 +35,17 @@ interface MemInitIfc;
     method Bool done();
 endinterface
 
+typedef struct {
+    DDR3Addr addr;
+    DDR3Data data;
+} WideMemInitLoad deriving(Eq, Bits, FShow);
+
+typedef union tagged {
+    WideMemInitLoad InitLoad;
+    void WideInitDone;
+} WideMemInit deriving(Eq, Bits, FShow);
+
+interface WideMemInitIfc;
+    interface Put#(WideMemInit) request;
+    method Bool done();
+endinterface

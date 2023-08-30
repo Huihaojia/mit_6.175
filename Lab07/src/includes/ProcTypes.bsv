@@ -17,6 +17,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 import Types::*;
 import FShow::*;
 import CMemTypes::*;
+import MemTypes::*;
+import Memory::*;
 
 // cpu to host data type
 typedef enum {
@@ -41,8 +43,8 @@ typedef struct {
 interface Proc;
     method ActionValue#(CpuToHostData) cpuToHost;
     method Action hostToCpu(Addr startpc);
-    interface MemInitIfc iMemInit;
-    interface MemInitIfc dMemInit;
+    interface WideMemInitIfc memInit;
+    interface MemoryClient#(DDR3AddrSize, DDR3DataSize) ddr3Client;
 endinterface
 
 // general purpose reg index

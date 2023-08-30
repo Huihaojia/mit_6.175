@@ -7,10 +7,10 @@ import ClientServer::*;
 import Connectable::*;
 
 // simulate a memory with pipelined delay
-typedef 1 MemDelay;
+typedef 5 MemDelay;
 
 module mkSimMem(DDR3_Client proc, Empty ifc);
-	Vector#(MemDelay, Fifo#(2, DDR3_Resp)) respQ <- replicateM(mkCFFifo);
+	Vector#(MemDelay, Fifo#(4, DDR3_Resp)) respQ <- replicateM(mkCFFifo);
 
 	// always init using mem.vmh, never simulate initialization
 	RegFile#(DDR3Addr, Bit#(512)) mem <- mkRegFileFullLoad("mem.vmh");

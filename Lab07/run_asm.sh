@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 asm_tests=(
 	simple
 	add addi
@@ -18,13 +17,12 @@ asm_tests=(
 	srl srli
 	sub
 	xor xori
-	bpred_bht bpred_j bpred_ras
+	bpred_bht bpred_j bpred_ras bpred_j_noloop
 	cache
 	)
 
 simple_test=(
-	bpred_ras
-	cache
+	bpred_bht bpred_j bpred_ras bpred_j_noloop
 )
 
 vmh_dir=programs/build/assembly/vmh
@@ -39,8 +37,8 @@ pkill bluetcl
 pkill ubuntu.exe
 
 # run each test
-echo "-- start --" > ./bluesim/log
-for test_name in ${simple_test[@]}; do
+echo "########## $NAME Assembly Start ##########" > ./bluesim/log
+for test_name in ${asm_tests[@]}; do
 	echo "-- assembly test: ${test_name} --" >> ./bluesim/log
 	# copy vmh file
 	mem_file=${vmh_dir}/${test_name}.riscv.vmh
@@ -59,3 +57,5 @@ done
 # kill previous bsim if any
 pkill bluetcl
 pkill ubuntu.exe
+
+mv ./bluesim/log ./reports/${NAME}_asm.log

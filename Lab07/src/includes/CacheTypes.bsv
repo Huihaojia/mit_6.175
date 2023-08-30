@@ -2,10 +2,14 @@ import MemTypes::*;
 import Types::*;
 import Vector::*;
 
+import CMemTypes::*;
+
 typedef 16 CacheLineWords; // to match DDR3 width
 typedef TMul#(CacheLineWords, 4) CacheLineBytes;
 typedef 16 CacheRows;
 
+// |    Cache Tag   |   Cache Index   |   Cache Word Select |   Byte Select |
+// |    22-bits     |   4-bits        |   4-bits            |   2-bits      |
 typedef Bit#( TSub#(TSub#(TSub#(AddrSz, 2), TLog#(CacheRows)), TLog#(CacheLineWords)) ) CacheTag;
 typedef Bit#( TLog#(CacheRows) ) CacheIndex;
 typedef Bit#( TLog#(CacheLineWords) ) CacheWordSelect;
@@ -56,7 +60,6 @@ interface Cache;
     method Action req(MemReq r);
     method ActionValue#(MemResp) resp;
 endinterface
-
 
 // store queue size
 typedef 16 StQSize;

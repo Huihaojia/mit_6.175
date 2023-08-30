@@ -158,3 +158,7 @@ Every branch instruction should be trained ,such as J, Jr, Br, Auipc.
 #### 14. How will you know if your BHT works?
 
 If the misprediction occurs every two instructions, we will know whether the BHT works. Without the BHT, the flush will happens to each pipeline every cycle, which is caused by misprediction. Thus, we can use a case that introducing parity into loop kernel to verify the functionality of BHT.
+
+## Lab07 RISC-V Processor with DRAM and Caches
+
+With cache, the execution time of benchmarks can be shorted to about 50% compared with design without cache.

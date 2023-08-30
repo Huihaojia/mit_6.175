@@ -1,10 +1,22 @@
+import Types::*;
+
+import Memory::*;
+
+import GetPut::*;
+
+// |    24-bits    |    ......      |
+// |    24-bits    |    512-bits    |
+// |    24-bits    |    512-bits    |
+
+// |    24-bits    |    4-bits  |    32-bits    |
+
 typedef 24 DDR3AddrSize;
 typedef Bit#(DDR3AddrSize) DDR3Addr;
 typedef 512 DDR3DataSize;
 typedef Bit#(DDR3DataSize) DDR3Data;
 typedef TDiv#(DDR3DataSize, 8) DDR3DataBytes;
 typedef Bit#(DDR3DataBytes) DDR3ByteEn;
-typedef TDiv#(DDR3DataSize, DataSize) DDR3DataWords;
+typedef TDiv#(DDR3DataSize, DataSz) DDR3DataWords;
 
 // The below typedef is equivalent to this:
 // typedef struct {

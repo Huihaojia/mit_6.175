@@ -2,24 +2,28 @@ import Fifo::*;
 import Vector::*;
 import MemTypes::*;
 import CacheTypes::*;
+
+import CMemTypes::*;
 import MemUtil::*;
 import Types::*;
 
-module mkBypassCache(WideMem mem, Cache ifc);
-    Fifo#(8, MemReq) buffer <- mkPipelineFifo();
+import Memory::*;
+
+module mkTranslator(WideMem mem, Cache ifc);
+    Fifo#(4, CacheWordSelect) buffer <- mkCFFifo;
 
     method Action req(MemReq r);
-        if(r.op == Ld) begin
-            buffer.enq(r);
-        end
+        if (r.op == Ld) begin
+            buffer.enq(getWordSelect(r.addr));
+        end 
         mem.req(toWideMemReq(r));
     endmethod
 
     method ActionValue#(MemResp) resp;
-        let request = buffer.first;
+        let cacheWordSel = buffer.first;
         buffer.deq;
-		let data <- mem.resp();
-        return data[getWordSelect(request.addr)]; // load 1 word (16 bits)
+        let cacheline <- mem.resp;
+        return cacheline[cacheWordSel];
     endmethod
 endmodule
 
