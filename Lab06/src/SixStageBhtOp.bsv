@@ -140,9 +140,11 @@ module mkProc(Proc);
 			if (decEpoch == f2d.decEpoch) begin
 				DecodedInst inst = decode(fetchInst);
 				if (inst.iType == J) begin
-					decEpoch <= !decEpoch;
+					targetAddr = fromMaybe(?, inst.imm) + f2d.pc;
 					jumpFinish = True;
-					Addr targetAddr = fromMaybe(?, inst.imm) + f2d.pc;
+				end
+				if (targetAddr != f2d.f2ePredPc) begin
+					decEpoch <= !decEpoch;
 					d2fFifo.enq( ExeRedirect {
 						pc:		f2d.pc,
 						nextPc:	targetAddr
@@ -329,4 +331,5 @@ module mkProc(Proc);
 	interface iMemInit = iMem.init;
     interface dMemInit = dMem.init;
 endmodule
+
 
