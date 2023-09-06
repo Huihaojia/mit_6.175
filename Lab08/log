@@ -1,0 +1,34 @@
+Benchmarks Test
+-- benchmark test: median --
+Benchmark median
+Cycles = 17533
+Insts  = 17536
+Return 0
+PASSED
+-- benchmark test: multiply --
+Benchmark multiply
+Cycles = 54267
+Insts  = 54270
+Return 0
+PASSED
+-- benchmark test: qsort --
+Benchmark qsort
+Cycles = 318644
+Insts  = 318647
+Return 0
+PASSED
+-- benchmark test: towers --
+Benchmark tower
+Cycles = 15207
+Insts  = 15210
+Return 0
+PASSED
+-- benchmark test: vvadd --
+Benchmark vvadd
+Cycles = 6651
+Insts  = 6654
+Return 0
+PASSED
+-- benchmark test: mul_inst --
+Implement main(), foo!
+FAILED: exit code = 65535
