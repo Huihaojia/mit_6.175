@@ -3,40 +3,47 @@ import Fifo::*;
 
 module mkMessageFifo(MessageFifo#(n));
 
-    Fifo#(2, CacheMemResp) resp_fifo <- mkCFFifo;
-    Fifo#(2, CacheMemReq)  req_fifo  <- mkCFFifo;
+    Fifo#(n, CacheMemResp) respFifo <- mkCFFifo;
+    Fifo#(n, CacheMemReq)  reqFifo  <- mkCFFifo;
 
-    method Action enq_resp(CacheMemResp d);
-        resp_fifo.enq(d);
+    method Action enq_resp(CacheMemResp d) if (respFifo.notFull);
+        respFifo.enq(d);
     endmethod
 
-    method Action enq_req(CacheMemReq d);
-        req_fifo.enq(d);
+    method Action enq_req(CacheMemReq d) if(reqFifo.notFull);
+        reqFifo.enq(d);
     endmethod
 
-    method Bool hasResp = resp_fifo.notEmpty;
+    method Bool hasResp;
+        return respFifo.notEmpty;
+    endmethod
 
-    method Bool hasReq = req_fifo.notEmpty;
+    method Bool hasReq;
+        return reqFifo.notEmpty;
+    endmethod
 
-    method Bool notEmpty = (resp_fifo.notEmpty || req_fifo.notEmpty);
+    method Bool notEmpty;
+        return respFifo.notEmpty || reqFifo.notEmpty;
+    endmethod
 
     method CacheMemMessage first;
-        if (resp_fifo.notEmpty) begin
-            return tagged Resp resp_fifo.first;
+        CacheMemMessage message;
+        if (respFifo.notEmpty) begin
+            message = tagged Resp respFifo.first;
         end
         else begin
-            return tagged Req req_fifo.first;
+            message = tagged Req reqFifo.first;
         end
+        return message;
     endmethod
 
     method Action deq;
-        if (resp_fifo.notEmpty) begin
-            resp_fifo.deq;
+        if (respFifo.notEmpty) begin
+            respFifo.deq;
         end
-        else begin
-            req_fifo.deq;
+        else if (reqFifo.notEmpty) begin
+            reqFifo.deq;
         end
     endmethod
-
 
 endmodule

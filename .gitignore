@@ -6,3 +6,8 @@
 **/bluesim/
 **/LabCmp/
 **/LabCacheCmp/
+**/*.json
+**/Golden/
+**/bak/
+**/*bak*
+**/*.tcl

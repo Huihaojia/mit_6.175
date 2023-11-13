@@ -41,7 +41,6 @@ typedef CacheLine WideMemResp;
 interface WideMem;
     method Action req(WideMemReq r);
     method ActionValue#(CacheLine) resp;
-	method Bool respValid;
 endinterface
 
 

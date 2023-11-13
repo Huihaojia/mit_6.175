@@ -7,6 +7,8 @@ import ProcTypes::*;
 import Fifo::*;
 import Ehr::*;
 import RefTypes::*;
+import Printf::*;
+
 
 typedef enum { Rdy, StrtMiss, SndFillReq, WaitFillResp, Resp } CacheStatus
 deriving(Eq, Bits);
@@ -29,173 +31,254 @@ module mkDCache#(CoreID id)(
     RefDMem refDMem,
     DCache ifc
 );
+
     Vector#(CacheRows, Reg#(CacheLine)) dataVec <- replicateM(mkRegU);
-    Vector#(CacheRows, Reg#(CacheTag))   tagVec <- replicateM(mkRegU);
-    Vector#(CacheRows, Reg#(MSI))       privVec <- replicateM(mkReg(I));
+    Vector#(CacheRows, Reg#(CacheTag))  tagVec <- replicateM(mkRegU);
+    Vector#(CacheRows, Reg#(MSI))       msiVec <- replicateM(mkReg(I));
 
     Reg#(CacheStatus) mshr <- mkReg(Rdy);
 
-    Fifo#(8, Data)                  hitQ <- mkBypassFifo;
-    Fifo#(8, MemReq)                reqQ <- mkBypassFifo;
-    Reg#(MemReq)                  buffer <- mkRegU;
+    Fifo#(8, Data)      respFifo <- mkCFFifo;
+    Fifo#(8, MemReq)    reqFifo <- mkCFFifo;
+    Reg#(MemReq)        reqBuffer <- mkRegU;
     Reg#(Maybe#(CacheLineAddr)) lineAddr <- mkReg(Invalid);
 
-    rule doRdy (mshr == Rdy);
-        MemReq r = reqQ.first;
-        reqQ.deq;
-        let     sel = getWordSelect(r.addr);
-        let     idx = getIndex(r.addr);
-        let     tag = getTag(r.addr);
-        let     hit = tagVec[idx] == tag && privVec[idx] > I;
-        let proceed = (r.op != Sc || (r.op == Sc && isValid(lineAddr) &&
-                       fromMaybe(?, lineAddr) == getLineAddr(r.addr)));
+    Reg#(File) file <- mkReg(InvalidFile);
+	Reg#(Bool) initDone <- mkReg(False);
 
-        if (!proceed) begin
-            hitQ.enq(scFail);
-            refDMem.commit(r, Invalid, Valid(scFail));
+	rule doInit(!initDone);
+		// open log file
+		String name = sprintf("driver_%d.out", id);
+		let f <- $fopen(name, "w+");
+		if(f == InvalidFile) begin
+			$write(stderr, "ERROR: fail to open %s\n", name);
+			$finish;
+		end
+		file <= f;
+
+		initDone <= True;
+	endrule
+
+
+    // Tag Fetch and Judge Hit
+    rule doReady if (mshr == Rdy && initDone);
+    	Fmt ret = $format("# Ready__");
+
+        MemReq req = reqFifo.first;
+        reqFifo.deq;
+        // Addr Decode
+        let wordSel = getWordSelect(req.addr);
+        let lineSel = getIndex(req.addr);
+        let tag     = getTag(req.addr);
+        let tagHit  = tagVec[lineSel] == tag;
+
+        let proceed =   (req.op != Sc) || 
+                        (req.op == Sc && isValid(lineAddr) && fromMaybe(?, lineAddr) == getLineAddr(req.addr));
+
+        if (req.op == Fence) begin
+            refDMem.commit(req, Invalid, Invalid);
+        end
+        else if (!proceed) begin
+            respFifo.enq(scFail);
+            refDMem.commit(req, Invalid, Valid(scFail));
             lineAddr <= Invalid;
         end
         else begin
-            if (!hit) begin
-                buffer <= r;
-                mshr <= StrtMiss;
+            if (msiVec[lineSel] == I) begin
+                reqBuffer <= req;
+                mshr <= SndFillReq;
+                ret = ret + $format("To SndFillReq_");
             end
             else begin
-                if (r.op == Ld || r.op == Lr) begin
-                    hitQ.enq(dataVec[idx][sel]);
-                    refDMem.commit(r, Valid(dataVec[idx]), Valid(dataVec[idx][sel]));
-                    if (r.op == Lr) begin
-                        lineAddr <= tagged Valid getLineAddr(r.addr);
-                    end
-                end
-                else begin
-                    if (isStateM(privVec[idx])) begin
-                        dataVec[idx][sel] <= r.data;
-                        if (r.op == Sc) begin
-                            hitQ.enq(scSucc);
-                            refDMem.commit(r, Valid(dataVec[idx]), Valid(scSucc));
-                            lineAddr <= Invalid;
-                        end
-                        else begin
-                            refDMem.commit(r, Valid(dataVec[idx]), Invalid);
+                if (tagHit) begin
+                    if (req.op == Ld || req.op == Lr) begin
+                        ret = ret + $format("Load Finish_");
+                        respFifo.enq(dataVec[lineSel][wordSel]);
+                        refDMem.commit(req, Valid(dataVec[lineSel]), Valid(dataVec[lineSel][wordSel]));
+                        if (req.op == Lr) begin
+                            lineAddr <= tagged Valid getLineAddr(req.addr);
                         end
                     end
                     else begin
-                        buffer <= r;
-                        mshr <= SndFillReq;
+                        if (msiVec[lineSel] == M) begin
+                            dataVec[lineSel][wordSel] <= req.data;
+                            ret = ret + $format("Store Finish_");
+                            if (req.op == Sc) begin
+                                respFifo.enq(scSucc);
+                                refDMem.commit(req, Valid(dataVec[lineSel]), Valid(scSucc));
+                                lineAddr <= Invalid;
+                            end
+                            else begin
+                                refDMem.commit(req, Valid(dataVec[lineSel]), Invalid);
+                            end
+                        end
+                        else begin
+                            reqBuffer <= req;
+                            mshr <= SndFillReq;
+                        end
                     end
                 end
+                else begin
+                    ret = ret + $format("To StrtMiss_");
+                    reqBuffer <= req;
+                    mshr <= StrtMiss;
+                end
             end
+            ret = ret + $format("0x%0x", req.addr);
         end
+        // File operation
+        // ret = ret + $format("\n");
+        // $fwrite(file, ret);
+        $display(ret);
+        // File operation
     endrule
 
-    rule doStrtMiss (mshr == StrtMiss);
-        let idx = getIndex(buffer.addr);
-        let tag = tagVec[idx];
-        let sel = getWordSelect(buffer.addr);
+    // set MSI to I, invalid cacheline, update cacheline to Memory
+    rule doStrtMiss if (mshr == StrtMiss);
+    	Fmt ret = $format("# StartMiss__");
 
-        if (!isStateI(privVec[idx])) begin
-            privVec[idx] <= I;
-            Maybe#(CacheLine) line = isStateM(privVec[idx]) ? Valid(dataVec[idx]) : Invalid;
-            let addr = { tag, idx, sel, 2'b0 };
-            toMem.enq_resp(CacheMemResp {
-                child: id,
-                addr: addr,
-                state: I,
-                data: line
-            });
-        end
-        if (isValid(lineAddr) && fromMaybe(?, lineAddr) == getLineAddr(buffer.addr)) begin
+        let wordSel = getWordSelect(reqBuffer.addr);
+        let lineSel = getIndex(reqBuffer.addr);
+        let tag     = tagVec[lineSel];
+
+        // 发生写miss，需要写回M状态的line
+        ret = ret + (isStateM(msiVec[lineSel]) ? $format("WriteBack") : $format(""));
+
+        msiVec[lineSel] <= I;
+        Maybe#(CacheLine) line = isStateM(msiVec[lineSel]) ? Valid(dataVec[lineSel]) : Invalid;
+        let addr = {tag, lineSel, wordSel, 2'b0};
+        toMem.enq_resp(CacheMemResp {
+            child:  id,
+            addr:   addr,
+            state:  I,
+            data:   line
+        });
+
+        if (isValid(lineAddr) && fromMaybe(?, lineAddr) == getLineAddr(reqBuffer.addr)) begin
             lineAddr <= Invalid;
         end
+
         mshr <= SndFillReq;
+
+        // ret = ret + $format("\n");
+        // $fwrite(file, ret);
+        $display(ret);
     endrule
 
-    rule doSndFillReq (mshr == SndFillReq);
-        let state = (buffer.op == Ld || buffer.op == Lr) ? S : M;
-        toMem.enq_req(CacheMemReq { child: id, addr: buffer.addr, state: state });
+    // send Req to Memory for new line
+    rule doSndFillReq if (mshr == SndFillReq);
+        let state = (reqBuffer.op == Ld || reqBuffer.op == Lr) ? S : M;
+        Fmt ret = $format("# Req2Mem__");
+
+        ret = ret + ((reqBuffer.op == Ld || reqBuffer.op == Lr) ? $format("S") : $format("M"));
+
+        // 向主存发起状态改变的申请，Ld指令取S态，St指令取M态
+        toMem.enq_req(CacheMemReq {
+            child: id,
+            addr: reqBuffer.addr,
+            state: state
+        });
         mshr <= WaitFillResp;
+
+        ret = ret + $format("\n");
+        $fwrite(file, ret);
     endrule
 
-    rule doWaitFillResp (mshr == WaitFillResp && fromMem.hasResp);
-        let tag = getTag(buffer.addr);
-        let idx = getIndex(buffer.addr);
-        let sel = getWordSelect(buffer.addr);
-        CacheMemResp x = ?;
-        if (fromMem.first matches tagged Resp .r) begin
-            x = r;
-        end
+    // update new line
+    rule doWaitFillResp if (mshr == WaitFillResp && fromMem.hasResp &&& fromMem.first matches tagged Resp .resp);
+        Fmt ret = $format("# WaitMem__");
+
+        let wordSel = getWordSelect(reqBuffer.addr);
+        let lineSel = getIndex(reqBuffer.addr);
+        let tag     = getTag(reqBuffer.addr);
         fromMem.deq;
-        CacheLine line = isValid(x.data) ? fromMaybe(?, x.data) : dataVec[idx];
-        if (buffer.op == St) begin
-            let old_line = isValid(x.data) ? fromMaybe(?, x.data) : dataVec[idx];
-            refDMem.commit(buffer, Valid(old_line), Invalid);
-            line[sel] = buffer.data;
+        CacheLine line = isValid(resp.data) ? fromMaybe(?, resp.data) : dataVec[lineSel];
+        if (reqBuffer.op == St) begin
+            refDMem.commit(reqBuffer, Valid(line), Invalid);
+            line[wordSel] = reqBuffer.data;
         end
-        else if (buffer.op == Sc) begin
-            if (isValid(lineAddr) && fromMaybe(?, lineAddr) == getLineAddr(buffer.addr)) begin
-                let lastMod = isValid(x.data) ? fromMaybe(?, x.data) : dataVec[idx];
-                refDMem.commit(buffer, Valid(lastMod), Valid(scSucc));
-                line[sel] = buffer.data;
-                hitQ.enq(scSucc);
+        else if (reqBuffer.op == Sc) begin
+            if (isValid(lineAddr) && fromMaybe(?, lineAddr) == getLineAddr(reqBuffer.addr)) begin
+                refDMem.commit(reqBuffer, Valid(line), Valid(scSucc));
+                line[wordSel] = reqBuffer.data;
+                respFifo.enq(scSucc);
             end
             else begin
-                hitQ.enq(scFail);
-                refDMem.commit(buffer, Invalid, Valid(scFail));
+                respFifo.enq(scFail);
+                refDMem.commit(reqBuffer, Invalid, Valid(scFail));
             end
             lineAddr <= Invalid;
         end
-        dataVec[idx] <= line;
-        tagVec[idx] <= tag;
-        privVec[idx] <= x.state;
+        dataVec[lineSel] <= line;
+        tagVec[lineSel] <= tag;
+        msiVec[lineSel] <= resp.state;
         mshr <= Resp;
+
+        // ret = ret + $format("\n");
+        // $fwrite(file, ret);
+        $display(ret);
     endrule
 
-    rule doResp (mshr == Resp);
-        let idx = getIndex(buffer.addr);
-        let sel = getWordSelect(buffer.addr);
-        if (buffer.op == Ld || buffer.op == Lr) begin
-            hitQ.enq(dataVec[idx][sel]);
-            refDMem.commit(buffer, Valid(dataVec[idx]), Valid(dataVec[idx][sel]));
-            if (buffer.op == Lr) begin
-                lineAddr <= tagged Valid getLineAddr(buffer.addr);
+    // get Response
+    rule doResp if (mshr == Resp);
+        Fmt ret = $format("# Response__");
+
+        let lineSel = getIndex(reqBuffer.addr);
+        let wordSel = getWordSelect(reqBuffer.addr);
+        if (reqBuffer.op == Ld || reqBuffer.op == Lr) begin
+            respFifo.enq(dataVec[lineSel][wordSel]);
+            refDMem.commit(reqBuffer, Valid(dataVec[lineSel]), Valid(dataVec[lineSel][wordSel]));
+            if (reqBuffer.op == Lr) begin
+                lineAddr <= tagged Valid getLineAddr(reqBuffer.addr);
             end
         end
         mshr <= Rdy;
+
+        // ret = ret + $format("\n");
+        // $fwrite(file, ret);
+        $display(ret);
     endrule
 
-    rule doDng (mshr != Resp && !fromMem.hasResp && fromMem.hasReq);
-        CacheMemReq x = ?;
-        if (fromMem.first matches tagged Req .r) begin
-            x = r;
-        end
-        let sel = getWordSelect(x.addr);
-        let idx = getIndex(x.addr);
-        let tag = getTag(x.addr);
-        if (privVec[idx] > x.state) begin
-            Maybe#(CacheLine) line = (privVec[idx] == M) ? Valid(dataVec[idx]) : Invalid;
-            let addr = { tag, idx, sel, 2'b0 };
+    // update Memory
+    rule doDng if (mshr != Resp && !fromMem.hasResp && fromMem.hasReq &&& fromMem.first matches tagged Req .req);
+        Fmt ret = $format("@ Coherence Feedback__");
+
+        fromMem.deq;
+        let wordSel = getWordSelect(req.addr);
+        let lineSel = getIndex(req.addr);
+        let tag = tagVec[lineSel];
+        if (msiVec[lineSel] > req.state) begin
+            Maybe#(CacheLine) line = (msiVec[lineSel] == M) ? Valid(dataVec[lineSel]) : Invalid;
+            let addr = { tag, lineSel, wordSel, 2'b0 };
+            ret = ret + $format("id:%d_0x%0x", id, addr);
             toMem.enq_resp(CacheMemResp {
                 child: id,
                 addr: addr,
-                state: x.state,
+                state: req.state,
                 data: line
             });
-            privVec[idx] <= x.state;
-            if (x.state == I) begin
+            msiVec[lineSel] <= req.state;
+            if (req.state == I) begin
                 lineAddr <= Invalid;
             end
         end
-        fromMem.deq;
+
+        // ret = ret + $format("\n");
+        // $fwrite(file, ret);
+        $display(ret);
     endrule
 
-    method Action req(MemReq r);
-        reqQ.enq(r);
+
+    method Action req(MemReq r) if (initDone);
         refDMem.issue(r);
+        reqFifo.enq(r);
+        $fwrite(file, ">> Have a Request\n");
     endmethod
 
-    method ActionValue#(Data) resp;
-        hitQ.deq;
-        return hitQ.first;
+    method ActionValue#(MemResp) resp if (initDone);
+        respFifo.deq;
+        $fwrite(file, "<< Have a Response\n");
+        return respFifo.first;
     endmethod
+
 endmodule

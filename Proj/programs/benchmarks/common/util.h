@@ -65,7 +65,16 @@ static int verify(int n, const volatile int* test, const int* verify) {
   {
     int t = test[i];
     int v = verify[i];
-    if (t != v) return i+1;
+    if (t != v) {
+		// printStr("Correct: ");
+		// printInt(test[i]);
+		// // printInt(v);
+		// printStr("\tError: ");
+		// printInt(verify[i]);
+		// // printInt(t);
+		// printStr("\n");
+		return i+1;
+	}
   }
   return 0;
 }

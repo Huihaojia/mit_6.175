@@ -6,6 +6,10 @@ typedef 16 CacheLineWords; // to match DDR3 width
 typedef TMul#(CacheLineWords, 4) CacheLineBytes;
 typedef 16 CacheRows;
 
+
+// What is the difference between LineWrods & Rows
+// |    Cache Tag   |   Cache Row Index   |   Cache Word Select |   Byte Select |
+// |    22-bits     |   4-bits            |   4-bits            |   2-bits      |
 typedef Bit#( TSub#(TSub#(AddrSz, 2), TLog#(CacheLineWords)) ) CacheLineAddr;
 typedef Bit#( TSub#(TSub#(TSub#(AddrSz, 2), TLog#(CacheRows)), TLog#(CacheLineWords)) ) CacheTag;
 typedef Bit#( TLog#(CacheRows) ) CacheIndex;
@@ -25,6 +29,7 @@ function CacheTag getTag(Addr a);
 	return truncateLSB(a);
 endfunction
 
+// Get Tag + Index
 function CacheLineAddr getLineAddr(Addr a);
 	return truncateLSB(a);
 endfunction

@@ -139,8 +139,10 @@ module mkDCacheLHUSM#(CoreID id)(
         CacheMemResp x = fromMem.first.Resp;
 
         CacheLine line;
-        if (isValid(x.data)) line = fromMaybe(?, x.data);
-        else line = dataArray[idx];
+        if (isValid(x.data))
+            line = fromMaybe(?, x.data);
+        else
+            line = dataArray[idx];
 
         Bool check = False;
         if (missReq.op == St) begin

@@ -199,6 +199,7 @@ module mkProc(Proc);
 		let jumpFinish = False;
 		let targetAddr = f2d.f2ePredPc;
 		Instruction fetchInst <- iMem.resp;
+		f2dFifo.deq;
 		$display("& Decode Get an instruction !");
 		if (exeEpoch == f2d.exeEpoch) begin
 			if (rfEpoch == f2d.rfEpoch) begin
@@ -222,16 +223,10 @@ module mkProc(Proc);
 						rfEpoch:		f2d.rfEpoch
 						}
 					);
-					f2dFifo.deq;
 					$display("# Decode: PC = %x, inst = %x, expanded = ", f2d.pc, fetchInst, showInst(fetchInst));
-				end else begin
-					f2dFifo.deq;
 				end
-			end else begin
-				f2dFifo.deq;
 			end
 		end else begin
-			f2dFifo.deq;
 			$display("Decode: Mispredict, redirected by Execute");
 		end
 	endrule

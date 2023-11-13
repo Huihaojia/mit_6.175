@@ -20,7 +20,7 @@ module mkRefSCMem(RefMem);
 	Vector#(CoreNum, Ehr#(CoreNum, Maybe#(CacheLineAddr))) link <- replicateM(mkEhr(Invalid));
 	
 	// bypass FIFO of mem ops: allow issue & commit of same op at one cycle
-	Vector#(CoreNum, Fifo#(MaxReqNum, MemReq)) reqQ <- replicateM(mkBypassFifo);
+	Vector#(CoreNum, Fifo#(16, MemReq)) reqQ <- replicateM(mkBypassFifo);
 	
 	// EHRs for req
 	Vector#(CoreNum, Ehr#(2, Maybe#(RefFetchReq)))   fetchEn <- replicateM(mkEhr(Invalid));
@@ -80,7 +80,7 @@ module mkRefSCMem(RefMem);
 				end
 				else begin
 					$fwrite(stderr, "%0t: RefSCMem: ERROR: core %d issues ", $time, i, fshow(r), " \n");
-					$fwrite(stderr, "there are already %d pending req\n", valueOf(MaxReqNum));
+					$fwrite(stderr, "there are already %d pending req\n", valueOf(16));
 					$finish;
 				end
 			end

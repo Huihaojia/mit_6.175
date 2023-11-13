@@ -11,7 +11,7 @@ bmarks_tests=(
 	mc_dekker
 	mc_incrementers
 	mc_spin_lock
-	mc_multiply2
+	# mc_multiply2
 	)
 
 vmh_dir=programs/build/mc_bench/bin

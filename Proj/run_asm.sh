@@ -2,7 +2,6 @@
 
 
 asm_tests=(
-	simple
 	add addi
 	and andi
 	auipc

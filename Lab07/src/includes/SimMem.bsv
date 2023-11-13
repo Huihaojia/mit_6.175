@@ -7,7 +7,7 @@ import ClientServer::*;
 import Connectable::*;
 
 // simulate a memory with pipelined delay
-typedef 5 MemDelay;
+typedef 2 MemDelay;
 
 module mkSimMem(DDR3_Client proc, Empty ifc);
 	Vector#(MemDelay, Fifo#(4, DDR3_Resp)) respQ <- replicateM(mkCFFifo);

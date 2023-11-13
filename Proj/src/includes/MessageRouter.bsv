@@ -11,44 +11,59 @@ module mkMessageRouter(
     MessagePut r2m,
     Empty ifc
 );
-    rule core2mem;
-        CoreID core_id = 0;
+
+    rule router2master;
+        CoreID coreID = 0;
         Bool hasResp = False;
-        Bool hasMsg = False;
+        Bool hasReq = False;
+        Bool occupied = hasResp || hasReq;
+
         for (Integer i = 0; i < valueOf(CoreNum); i = i + 1) begin
             if (c2r[fromInteger(i)].notEmpty) begin
                 let x = c2r[fromInteger(i)].first;
-                if (x matches tagged Resp .r) begin
+                if (x matches tagged Resp .resp) begin
                     if (!hasResp) begin
-                        core_id = fromInteger(i);
+                        coreID = fromInteger(i);
                         hasResp = True;
-                        hasMsg = True;
+                        hasReq = True;
                     end
                 end
-                else if (x matches tagged Req .r) begin
-                    if (!hasMsg && !hasResp) begin
-                        core_id = fromInteger(i);
-                        hasMsg = True;
+                else if (x matches tagged Req .req) begin
+                    if (!hasReq && !hasResp) begin
+                        coreID = fromInteger(i);
+                        hasReq = True;
                     end
                 end
             end
         end
-        if (hasMsg || hasResp) begin
-            let x = c2r[core_id].first;
-            case (x) matches
-                tagged Resp .resp : r2m.enq_resp(resp);
-                tagged Req .req : r2m.enq_req(req);
+
+        if (hasReq || hasResp) begin
+            let message = c2r[coreID].first;
+            c2r[coreID].deq;
+            case(message) matches
+                tagged Resp .resp: begin
+                    r2m.enq_resp(resp);
+                end
+                tagged Req  .req: begin
+                    r2m.enq_req(req);
+                end
             endcase
-            c2r[core_id].deq;
         end
     endrule
 
-    rule mem2core;
-        let x = m2r.first;
-        case (x) matches
-            tagged Resp .resp : r2c[resp.child].enq_resp(resp);
-            tagged Req .req : r2c[req.child].enq_req(req);
-        endcase
+    rule master2router;
+        let t = m2r.first;
         m2r.deq;
+        case(t) matches
+            tagged Resp .resp: begin
+                let coreID = resp.child;
+                r2c[coreID].enq_resp(resp);
+            end
+            tagged Req  .req: begin
+                let coreID = req.child;
+                r2c[coreID].enq_req(req);
+            end
+        endcase
     endrule
+
 endmodule

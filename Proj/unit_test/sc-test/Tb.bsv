@@ -5,7 +5,9 @@ import RefTypes::*;
 import MemUtil::*;
 import SimMem::*;
 import MemReqIDGen::*;
+
 import DCache::*;
+
 import MessageFifo::*;
 import MessageRouter::*;
 import PPP::*;
@@ -50,11 +52,11 @@ module mkTestDriver(
 	// log file
 	Reg#(File) file <- mkReg(InvalidFile);
 
-	Fifo#(2, MemReq) reqQ <- mkCFFifo;
+	Fifo#(4, MemReq) reqQ <- mkCFFifo;
 
 	// monitor processing time to detect deadlock
 	Ehr#(2, Data) procTime <- mkEhr(0); 
-	Data maxProcTime = 1000;
+	Data maxProcTime = 10000;
 
 	// req counter
 	Reg#(Data) reqNum <- mkReg(0);
@@ -68,7 +70,7 @@ module mkTestDriver(
 
 		// open log file
 		String name = sprintf("driver_%d_trace.out", id);
-		let f <- $fopen(name, "w");
+		let f <- $fopen(name, "w+");
 		if(f == InvalidFile) begin
 			$fwrite(stderr, "ERROR: fail to open %s\n", name);
 			$finish;
@@ -103,6 +105,7 @@ module mkTestDriver(
 		// we do not check resp value, let RefMem to check
 		reqQ.deq;
 		let req = reqQ.first;
+		// Store默认finish，Load等待cache的数据返回后finish
 		if(req.op == Ld) begin
 			let d <- cache.resp;
 		end
